@@ -7,7 +7,7 @@
 #include <lolie/Memory.h>
 
 #include "irc.h"
-
+#include "Locale.h"
 
 /**
  * Buffer initialization
@@ -17,6 +17,7 @@ char write_buffer[IRC_WRITE_BUFFER_LEN];
 char command_prefix = '!',
      command_separator = ' ',
      command_arg_separator = ' ';
+enum Languages language = LANG_SWEDISH;
 
 void onMessageFunc(irc_connection_id id,const irc_message* message){
 	switch(message->command_type){
@@ -143,7 +144,7 @@ void onMessageFunc(irc_connection_id id,const irc_message* message){
 					case 6:
 						//Random
 						if(Data_equals(command.ptr,"random",6)){
-							int len=snprintf(write_buffer,IRC_WRITE_BUFFER_LEN,"Random: %u (0 to %u)",rand(),RAND_MAX);
+							int len=snprintf(write_buffer,IRC_WRITE_BUFFER_LEN,"%u (0 to %u)",rand(),RAND_MAX);
 							irc_send_message(id,message->command.privmsg.target,STRINGP(write_buffer,len));
 							goto SuccessCommand;
 						}
@@ -179,6 +180,19 @@ void onMessageFunc(irc_connection_id id,const irc_message* message){
 							goto SuccessCommand;
 						}
 						goto UnknownCommand;
+					case 8:
+						//Language
+						if(Data_equals(command.ptr,"language",8)){
+							for(unsigned int i=0;i<LANG_COUNT;++i)
+								if(Data_equals(locale[i].lang_name.ptr,read_ptr_begin,locale[i].lang_name.length)){
+									language=i;
+									irc_send_message(id,message->command.privmsg.target,locale[language].language.set);		
+									goto SuccessCommand;
+								}
+							irc_send_message(id,message->command.privmsg.target,locale[language].language.unknown);
+							goto SuccessCommand;
+						}
+						goto UnknownCommand;
 					case 9:
 						//Word count
 						if(Data_equals(command.ptr,"wordcount",9)){
@@ -187,7 +201,7 @@ void onMessageFunc(irc_connection_id id,const irc_message* message){
 								if(*read_ptr++==' ')
 									++count;
 
-							int len=snprintf(write_buffer,IRC_WRITE_BUFFER_LEN,"Word Count: %u words",count);
+							int len=snprintf(write_buffer,IRC_WRITE_BUFFER_LEN,"%u words",count);
 							irc_send_message(id,message->command.privmsg.target,STRINGP(write_buffer,len));
 							goto SuccessCommand;
 						}
@@ -197,32 +211,32 @@ void onMessageFunc(irc_connection_id id,const irc_message* message){
 						if(Data_equals(command.ptr,"magic8ball",10)){
 							unsigned short len=0;
 							if(read_ptr_end-read_ptr_begin<2 || *(read_ptr_end-1)!='?'){
-								len=20;memcpy(write_buffer,"Ask a question first",len);
+								len=locale[language].magic8ball.ask.length;  memcpy(write_buffer,locale[language].magic8ball.ask.ptr,len);
 							}else{
 								switch(rand()%20){
-									case  0:len=13;memcpy(write_buffer,"It is certain"            ,len);break;
-									case  1:len=18;memcpy(write_buffer,"It is decidedly so"       ,len);break;
-									case  2:len=15;memcpy(write_buffer,"Without a doubt"          ,len);break;
-									case  3:len=14;memcpy(write_buffer,"Yes definitely"           ,len);break;
-									case  4:len=18;memcpy(write_buffer,"You may rely on it"       ,len);break;
-									case  5:len=15;memcpy(write_buffer,"As I see it yes"          ,len);break;
-									case  6:len=11;memcpy(write_buffer,"Most likely"              ,len);break;
-									case  7:len=12;memcpy(write_buffer,"Outlook good"             ,len);break;
-									case  8:len= 3;memcpy(write_buffer,"Yes"                      ,len);break;
-									case  9:len=18;memcpy(write_buffer,"Signs point to yes"       ,len);break;
-									case 10:len=20;memcpy(write_buffer,"Reply hazy try again"     ,len);break;
-									case 11:len=15;memcpy(write_buffer,"Ask again later"          ,len);break;
-									case 12:len=23;memcpy(write_buffer,"Better not tell you now"  ,len);break;
-									case 13:len=18;memcpy(write_buffer,"Cannot predict now"       ,len);break;
-									case 14:len=25;memcpy(write_buffer,"Concentrate and ask again",len);break;
-									case 15:len=17;memcpy(write_buffer,"Don't count on it"        ,len);break;
-									case 16:len=14;memcpy(write_buffer,"My reply is no"           ,len);break;
-									case 17:len=17;memcpy(write_buffer,"My sources say no"        ,len);break;
-									case 18:len=19;memcpy(write_buffer,"Outlook not so good"      ,len);break;
-									case 19:len=13;memcpy(write_buffer,"Very doubtful"            ,len);break;
+									case  0:len=locale[language].magic8ball.yes[0].length;  memcpy(write_buffer,locale[language].magic8ball.yes[0].ptr,len);break;
+									case  1:len=locale[language].magic8ball.yes[1].length;  memcpy(write_buffer,locale[language].magic8ball.yes[1].ptr,len);break;
+									case  2:len=locale[language].magic8ball.yes[2].length;  memcpy(write_buffer,locale[language].magic8ball.yes[2].ptr,len);break;
+									case  3:len=locale[language].magic8ball.yes[3].length;  memcpy(write_buffer,locale[language].magic8ball.yes[3].ptr,len);break;
+									case  4:len=locale[language].magic8ball.yes[4].length;  memcpy(write_buffer,locale[language].magic8ball.yes[4].ptr,len);break;
+									case  5:len=locale[language].magic8ball.yes[5].length;  memcpy(write_buffer,locale[language].magic8ball.yes[5].ptr,len);break;
+									case  6:len=locale[language].magic8ball.yes[6].length;  memcpy(write_buffer,locale[language].magic8ball.yes[6].ptr,len);break;
+									case  7:len=locale[language].magic8ball.yes[7].length;  memcpy(write_buffer,locale[language].magic8ball.yes[7].ptr,len);break;
+									case  8:len=locale[language].magic8ball.yes[8].length;  memcpy(write_buffer,locale[language].magic8ball.yes[8].ptr,len);break;
+									case  9:len=locale[language].magic8ball.yes[9].length;  memcpy(write_buffer,locale[language].magic8ball.yes[9].ptr,len);break;
+									case 10:len=locale[language].magic8ball.maybe[0].length;memcpy(write_buffer,locale[language].magic8ball.maybe[0].ptr,len);break;
+									case 11:len=locale[language].magic8ball.maybe[1].length;memcpy(write_buffer,locale[language].magic8ball.maybe[1].ptr,len);break;
+									case 12:len=locale[language].magic8ball.maybe[2].length;memcpy(write_buffer,locale[language].magic8ball.maybe[2].ptr,len);break;
+									case 13:len=locale[language].magic8ball.maybe[3].length;memcpy(write_buffer,locale[language].magic8ball.maybe[3].ptr,len);break;
+									case 14:len=locale[language].magic8ball.maybe[4].length;memcpy(write_buffer,locale[language].magic8ball.maybe[4].ptr,len);break;
+									case 15:len=locale[language].magic8ball.no[0].length;   memcpy(write_buffer,locale[language].magic8ball.no[0].ptr,len);break;
+									case 16:len=locale[language].magic8ball.no[1].length;   memcpy(write_buffer,locale[language].magic8ball.no[1].ptr,len);break;
+									case 17:len=locale[language].magic8ball.no[2].length;   memcpy(write_buffer,locale[language].magic8ball.no[2].ptr,len);break;
+									case 18:len=locale[language].magic8ball.no[3].length;   memcpy(write_buffer,locale[language].magic8ball.no[3].ptr,len);break;
+									case 19:len=locale[language].magic8ball.no[4].length;   memcpy(write_buffer,locale[language].magic8ball.no[4].ptr,len);break;
 								}
 								if(len==0){
-									len=9;memcpy(write_buffer,"Try again",len);
+									len=locale[language].magic8ball.failure.length;  memcpy(write_buffer,locale[language].magic8ball.failure.ptr,len);
 								}
 							}
 							irc_send_message(id,message->command.privmsg.target,STRINGP(write_buffer,len));
@@ -233,7 +247,7 @@ void onMessageFunc(irc_connection_id id,const irc_message* message){
 
 				UnknownCommand:{
 					int len = Stringp_sput(STRINGP(write_buffer,IRC_WRITE_BUFFER_LEN),2,
-						STRINGP("Unknown command: ",17),
+						locale[language].unknown_command,
 						command
 					);
 					irc_send_message(id,message->command.privmsg.target,STRINGP(write_buffer,len));
