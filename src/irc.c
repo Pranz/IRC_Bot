@@ -151,7 +151,7 @@ void irc_parse_message(irc_connection_id id,string raw_message,void(*onMessageFu
 		//Params
 		bool repeat=false;
 		unsigned char paramCount=0;
-		while(true){
+		while(true){//TODO: Implement all the other message command types and not only privmsg
 			if((repeat=(read_ptr[0] == '\r' && read_ptr[1] == '\n')) || read_ptr>=read_ptr_end){
 				if(paramCount==1){
 					switch(message.command_type){
