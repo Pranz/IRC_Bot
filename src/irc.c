@@ -3,8 +3,10 @@
 #include <stdio.h> //Input/output
 #include <stdarg.h>//Variable length arguments
 #include <stdlib.h>//Standard definitions
+#include <string.h>
 
-#include <string.h>//Null terminatd string operations
+#include <lolie/Stringp.h>//Null terminatd Stringp operations
+#include <lolie/Memory.h>//Data_equals
 
 #include <unistd.h>//Unix standard library
 #include <netdb.h> //Networking
@@ -35,8 +37,8 @@ irc_connection_id irc_connect(const char* host,unsigned short port){
 }
 
 inline void irc_send_raw(irc_connection_id id,const char* str,size_t len){
-	fputsn(">> ",3,stdout);
-	fputsn(str,len,stdout);
+	Stringp_put(STRINGP(">> ",3),stdout);
+	Stringp_put(STRINGP(str,len),stdout);
 	write(id,str,len);
 }
 
@@ -44,28 +46,28 @@ inline void irc_send_rawnt(irc_connection_id id,const char* str){
 	irc_send_raw(id,str,strlen(str));
 }
 
-inline void irc_send_message(irc_connection_id id,string target,string message){
-	char write_buffer[message.len+target.len+12];
+inline void irc_send_message(irc_connection_id id,Stringp target,Stringp message){
+	char write_buffer[message.length+target.length+12];
 
-	int len = sputstring(STRING(write_buffer,IRC_BUFFER_LENGTH),5,
-		STRING("PRIVMSG ",8),
+	int len = Stringp_sput(STRINGP(write_buffer,IRC_BUFFER_LENGTH),5,
+		STRINGP("PRIVMSG ",8),
 		target,
-		STRING(" :",2),
+		STRINGP(" :",2),
 		message,
-		STRING("\r\n",2)
+		STRINGP("\r\n",2)
 	);
 	irc_send_raw(id,write_buffer,len);
 }
 
-void irc_parse_message(irc_connection_id id,string raw_message,void(*onMessageFunc)(irc_connection_id id,const irc_message* message)){
+void irc_parse_message(irc_connection_id id,Stringp raw_message,void(*onMessageFunc)(irc_connection_id id,const irc_message* message)){
 	//If standard message prefix
-	if(raw_message.chrs[0] == ':'){
+	if(raw_message.ptr[0] == ':'){
 		irc_message message;
 		message.raw_message = raw_message;
 
-		char* read_ptr       = raw_message.chrs+1,
+		char* read_ptr       = raw_message.ptr+1,
 		    * read_ptr_begin = read_ptr,
-		    * read_ptr_end   = raw_message.chrs+raw_message.len;
+		    * read_ptr_end   = raw_message.ptr+raw_message.length;
 
 		//Prefix
 		message.prefix_type = IRC_MESSAGE_PREFIX_UNKNOWN;
@@ -73,14 +75,14 @@ void irc_parse_message(irc_connection_id id,string raw_message,void(*onMessageFu
 			if(read_ptr>=read_ptr_end)
 				return;
 			if(read_ptr[0] == '\r' && read_ptr[1] == '\n')
-				return irc_parse_message(id,STRING(read_ptr+2,raw_message.len-(read_ptr+2-raw_message.chrs)),onMessageFunc);
+				return irc_parse_message(id,STRINGP(read_ptr+2,raw_message.length-(read_ptr+2-raw_message.ptr)),onMessageFunc);
 
 			if(*read_ptr == ' '){//If end of prefix
 				if(message.prefix_type == IRC_MESSAGE_PREFIX_USER){//If already determined it is a user message, then it is a hostname
-					message.prefix.user.host = STRING(read_ptr_begin,read_ptr-read_ptr_begin);
+					message.prefix.user.host = STRINGP(read_ptr_begin,read_ptr-read_ptr_begin);
 					read_ptr_begin = ++read_ptr;
 				}else if(message.prefix_type == IRC_MESSAGE_PREFIX_UNKNOWN){//If not yet determined, then it is a servername
-					message.prefix.server.name = STRING(read_ptr_begin,read_ptr-read_ptr_begin);
+					message.prefix.server.name = STRINGP(read_ptr_begin,read_ptr-read_ptr_begin);
 					message.prefix_type = IRC_MESSAGE_PREFIX_SERVER;
 					read_ptr_begin = ++read_ptr;
 				}
@@ -88,11 +90,11 @@ void irc_parse_message(irc_connection_id id,string raw_message,void(*onMessageFu
 			}
 
 			if(message.prefix_type == IRC_MESSAGE_PREFIX_USER && *read_ptr == '@'){//If already found '!' and finds '@', then it is a username
-				message.prefix.user.username = STRING(read_ptr_begin,read_ptr-read_ptr_begin);
+				message.prefix.user.username = STRINGP(read_ptr_begin,read_ptr-read_ptr_begin);
 				read_ptr_begin = ++read_ptr;
 			}
 			else if(*read_ptr == '!'){//If separated by '!', then it is a nickname
-				message.prefix.user.nickname = STRING(read_ptr_begin,read_ptr-read_ptr_begin);
+				message.prefix.user.nickname = STRINGP(read_ptr_begin,read_ptr-read_ptr_begin);
 				message.prefix_type = IRC_MESSAGE_PREFIX_USER;
 				read_ptr_begin = ++read_ptr;
 			}
@@ -106,7 +108,7 @@ void irc_parse_message(irc_connection_id id,string raw_message,void(*onMessageFu
 			if(read_ptr>=read_ptr_end)
 				return;
 			if(read_ptr[0] == '\r' && read_ptr[1] == '\n')
-				return irc_parse_message(id,STRING(read_ptr+2,raw_message.len-(read_ptr+2-raw_message.chrs)),onMessageFunc);
+				return irc_parse_message(id,STRINGP(read_ptr+2,raw_message.length-(read_ptr+2-raw_message.ptr)),onMessageFunc);
 
 			if(*read_ptr == ' '){//If end of command
 				switch(read_ptr-read_ptr_begin){
@@ -119,25 +121,25 @@ void irc_parse_message(irc_connection_id id,string raw_message,void(*onMessageFu
 						}
 						break;
 					case 4:
-						if(strneq(read_ptr_begin,"JOIN",4))
+						if(Data_equals(read_ptr_begin,"JOIN",4))
 							message.command_type = IRC_MESSAGE_COMMAND_JOIN;
-						else if(strneq(read_ptr_begin,"PART",4))
+						else if(Data_equals(read_ptr_begin,"PART",4))
 							message.command_type = IRC_MESSAGE_COMMAND_PART;
-						else if(strneq(read_ptr_begin,"NICK",4))
+						else if(Data_equals(read_ptr_begin,"NICK",4))
 							message.command_type = IRC_MESSAGE_COMMAND_NICK;
-						else if(strneq(read_ptr_begin,"KICK",4))
+						else if(Data_equals(read_ptr_begin,"KICK",4))
 							message.command_type = IRC_MESSAGE_COMMAND_KICK;
 						break;
 					case 5:
-						if(strneq(read_ptr_begin,"TOPIC",5))
+						if(Data_equals(read_ptr_begin,"TOPIC",5))
 							message.command_type = IRC_MESSAGE_COMMAND_TOPIC;
 						break;
 					case 6:
-						if(strneq(read_ptr_begin,"NOTICE",6))
+						if(Data_equals(read_ptr_begin,"NOTICE",6))
 							message.command_type = IRC_MESSAGE_COMMAND_NOTICE;
 						break;
 					case 7:
-						if(strneq(read_ptr_begin,"PRIVMSG",7))
+						if(Data_equals(read_ptr_begin,"PRIVMSG",7))
 							message.command_type = IRC_MESSAGE_COMMAND_PRIVMSG;
 						break;
 				}
@@ -156,7 +158,7 @@ void irc_parse_message(irc_connection_id id,string raw_message,void(*onMessageFu
 				if(paramCount==1){
 					switch(message.command_type){
 						case IRC_MESSAGE_COMMAND_PRIVMSG:
-							message.command.privmsg.text = STRING(read_ptr_begin,read_ptr-read_ptr_begin);
+							message.command.privmsg.text = STRINGP(read_ptr_begin,read_ptr-read_ptr_begin);
 							break;
 					}
 				}
@@ -167,7 +169,7 @@ void irc_parse_message(irc_connection_id id,string raw_message,void(*onMessageFu
 				if(read_ptr[0] == ' '){
 					switch(message.command_type){
 						case IRC_MESSAGE_COMMAND_PRIVMSG:
-							message.command.privmsg.target = STRING(read_ptr_begin,read_ptr-read_ptr_begin);
+							message.command.privmsg.target = STRINGP(read_ptr_begin,read_ptr-read_ptr_begin);
 							break;
 					}
 					if(*++read_ptr == ':')
@@ -182,14 +184,14 @@ void irc_parse_message(irc_connection_id id,string raw_message,void(*onMessageFu
 		if(onMessageFunc!=NULL)
 			onMessageFunc(id,&message);
 		if(repeat)
-			return irc_parse_message(id,STRING(read_ptr+2,raw_message.len-(read_ptr+2-raw_message.chrs)),onMessageFunc);
+			return irc_parse_message(id,STRINGP(read_ptr+2,raw_message.length-(read_ptr+2-raw_message.ptr)),onMessageFunc);
 		else
 			return;
 
 	}
 	//Else if it is a ping request 
-	else if(strneq(raw_message.chrs,"PING",4)){
-		raw_message.chrs[1]='O';//Set buffer to PONG instead of PING
-		irc_send_raw(id,raw_message.chrs,raw_message.len);//Send
+	else if(Data_equals(raw_message.ptr,"PING",4)){
+		raw_message.ptr[1]='O';//Set buffer to PONG instead of PING
+		irc_send_raw(id,raw_message.ptr,raw_message.length);//Send
 	}
 }

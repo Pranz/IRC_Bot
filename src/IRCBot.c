@@ -1,9 +1,13 @@
 #include <stdio.h> //Input/output
-#include <string.h>
 #include <unistd.h>//Unix standard library
+#include <string.h>
 
-#include "String.h"
+#include <lolie/Stringp.h>
+#include <lolie/LinkedList.h>
+#include <lolie/Memory.h>
+
 #include "irc.h"
+
 
 /**
  * Buffer initialization
@@ -24,87 +28,87 @@ void onMessageFunc(irc_connection_id id,const irc_message* message){
 			break;
 		case IRC_MESSAGE_COMMAND_PRIVMSG:
 			//If on a channel with a '#' prefix and the private message has a : prefix
-			if(message->command.privmsg.target.chrs[0] == '#' && message->command.privmsg.text.chrs[0] == command_prefix){
+			if(message->command.privmsg.target.ptr[0] == '#' && message->command.privmsg.text.ptr[0] == command_prefix){
 				//Initialize read pointers
-				char* read_ptr = message->command.privmsg.text.chrs+1,
+				char* read_ptr = message->command.privmsg.text.ptr+1,
 				    * read_ptr_begin = read_ptr,
-				    * read_ptr_end = message->command.privmsg.text.chrs+message->command.privmsg.text.len;
+				    * read_ptr_end = message->command.privmsg.text.ptr+message->command.privmsg.text.length;
 
-				//Initialize command string
+				//Initialize command Stringp
 				while(read_ptr<read_ptr_end && *read_ptr!=command_separator)
 					++read_ptr;
-				string command = STRING(read_ptr_begin,read_ptr-read_ptr_begin);
+				Stringp command = STRINGP(read_ptr_begin,read_ptr-read_ptr_begin);
 				read_ptr_begin=++read_ptr;
 
 				//Commands
-				switch(command.len){
+				switch(command.length){
 					case 4:
 						//Bool
-						if(strneq(command.chrs,"bool",4)){
-							irc_send_message(id,message->command.privmsg.target,rand()%2?STRING("true",4):STRING("false",5));
+						if(Data_equals(command.ptr,"bool",4)){
+							irc_send_message(id,message->command.privmsg.target,rand()%2?STRINGP("true",4):STRINGP("false",5));
 							goto SuccessCommand;
 						}
 						//Dice
-						if(strneq(command.chrs,"dice",4)){
+						if(Data_equals(command.ptr,"dice",4)){
 							write_buffer[0]=rand()%6+'1';
-							irc_send_message(id,message->command.privmsg.target,STRING(write_buffer,1));
+							irc_send_message(id,message->command.privmsg.target,STRINGP(write_buffer,1));
 							goto SuccessCommand;
 						}
 						//Test
-						if(strneq(command.chrs,"test",4)){
+						if(Data_equals(command.ptr,"test",4)){
 							for(int i=0;i<5;++i)
-								irc_send_message(id,message->command.privmsg.target,STRING("ABCDEF",6));
+								irc_send_message(id,message->command.privmsg.target,STRINGP("ABCDEF",6));
 							goto SuccessCommand;
 						}
 						//Echo
-						if(strneq(command.chrs,"echo",4)){
-							irc_send_message(id,message->command.privmsg.target,STRING(read_ptr_begin,read_ptr_end-read_ptr_begin));
+						if(Data_equals(command.ptr,"echo",4)){
+							irc_send_message(id,message->command.privmsg.target,STRINGP(read_ptr_begin,read_ptr_end-read_ptr_begin));
 							goto SuccessCommand;
 						}
 						//Wikipedia
-						if(strneq(command.chrs,"wiki",4)){
-							int len = sputstring(STRING(write_buffer,IRC_WRITE_BUFFER_LEN),2,
-								STRING("http://en.wikipedia.org/wiki/Special:Search?search=",51),
-								STRING(read_ptr_begin,read_ptr_end-read_ptr_begin)
+						if(Data_equals(command.ptr,"wiki",4)){
+							int len = Stringp_sput(STRINGP(write_buffer,IRC_WRITE_BUFFER_LEN),2,
+								STRINGP("http://en.wikipedia.org/wiki/",51),
+								STRINGP(read_ptr_begin,read_ptr_end-read_ptr_begin)
 							);
-							irc_send_message(id,message->command.privmsg.target,STRING(write_buffer,len));
+							irc_send_message(id,message->command.privmsg.target,STRINGP(write_buffer,len));
 							goto SuccessCommand;
 						}
 						//IMDb
-						if(strneq(command.chrs,"imdb",4)){
-							int len = sputstring(STRING(write_buffer,IRC_WRITE_BUFFER_LEN),2,
-								STRING("http://www.imdb.com/find?s=all&q=",33),
-								STRING(read_ptr_begin,read_ptr_end-read_ptr_begin)
+						if(Data_equals(command.ptr,"imdb",4)){
+							int len = Stringp_sput(STRINGP(write_buffer,IRC_WRITE_BUFFER_LEN),2,
+								STRINGP("http://www.imdb.com/find?s=all&q=",33),
+								STRINGP(read_ptr_begin,read_ptr_end-read_ptr_begin)
 							);
-							irc_send_message(id,message->command.privmsg.target,STRING(write_buffer,len));
+							irc_send_message(id,message->command.privmsg.target,STRINGP(write_buffer,len));
 							goto SuccessCommand;
 						}
 						goto UnknownCommand;
 					case 5:
 						//Upper
-						if(strneq(command.chrs,"upper",5)){
+						if(Data_equals(command.ptr,"upper",5)){
 							char* write_ptr = write_buffer;
 							while(read_ptr<read_ptr_end){
 								*write_ptr++=*read_ptr>='a' && *read_ptr<='z'?(*read_ptr)+('A'-'a'):*read_ptr;
 								++read_ptr;
 							}
 
-							irc_send_message(id,message->command.privmsg.target,STRING(write_buffer,read_ptr_end-read_ptr_begin));
+							irc_send_message(id,message->command.privmsg.target,STRINGP(write_buffer,read_ptr_end-read_ptr_begin));
 							goto SuccessCommand;
 						}
 						//Lower
-						if(strneq(command.chrs,"lower",5)){
+						if(Data_equals(command.ptr,"lower",5)){
 							char* write_ptr = write_buffer;
 							while(read_ptr<read_ptr_end){
 								*write_ptr++=*read_ptr>='A' && *read_ptr<='Z'?(*read_ptr)+('a'-'A'):*read_ptr;
 								++read_ptr;
 							}
 
-							irc_send_message(id,message->command.privmsg.target,STRING(write_buffer,read_ptr_end-read_ptr_begin));
+							irc_send_message(id,message->command.privmsg.target,STRINGP(write_buffer,read_ptr_end-read_ptr_begin));
 							goto SuccessCommand;
 						}
 						//ROT13
-						if(strneq(command.chrs,"rot13",5)){
+						if(Data_equals(command.ptr,"rot13",5)){
 							char* write_ptr = write_buffer;
 							while(read_ptr<read_ptr_end){
 								if(*read_ptr>='A' && *read_ptr<='Z')
@@ -118,11 +122,11 @@ void onMessageFunc(irc_connection_id id,const irc_message* message){
 								++read_ptr;
 							}
 
-							irc_send_message(id,message->command.privmsg.target,STRING(write_buffer,read_ptr_end-read_ptr_begin));
+							irc_send_message(id,message->command.privmsg.target,STRINGP(write_buffer,read_ptr_end-read_ptr_begin));
 							goto SuccessCommand;
 						}
 						//ROT47
-						if(strneq(command.chrs,"rot47",5)){
+						if(Data_equals(command.ptr,"rot47",5)){
 							char* write_ptr = write_buffer;
 							while(read_ptr<read_ptr_end){
 								if(*read_ptr>='!' && *read_ptr<='~')
@@ -132,65 +136,65 @@ void onMessageFunc(irc_connection_id id,const irc_message* message){
 								++read_ptr;
 							}
 
-							irc_send_message(id,message->command.privmsg.target,STRING(write_buffer,read_ptr_end-read_ptr_begin));
+							irc_send_message(id,message->command.privmsg.target,STRINGP(write_buffer,read_ptr_end-read_ptr_begin));
 							goto SuccessCommand;
 						}
 						goto UnknownCommand;
 					case 6:
 						//Random
-						if(strneq(command.chrs,"random",6)){
+						if(Data_equals(command.ptr,"random",6)){
 							int len=snprintf(write_buffer,IRC_WRITE_BUFFER_LEN,"Random: %u (0 to %u)",rand(),RAND_MAX);
-							irc_send_message(id,message->command.privmsg.target,STRING(write_buffer,len));
+							irc_send_message(id,message->command.privmsg.target,STRINGP(write_buffer,len));
 							goto SuccessCommand;
 						}
 						//Choose
-						if(strneq(command.chrs,"choose",6)){
-							irc_send_message(id,message->command.privmsg.target,STRING("Not implemented yet",19));
+						if(Data_equals(command.ptr,"choose",6)){
+							irc_send_message(id,message->command.privmsg.target,STRINGP("Not implemented yet",19));
 							goto SuccessCommand;
 						}
 						//Length
-						if(strneq(command.chrs,"length",6)){
+						if(Data_equals(command.ptr,"length",6)){
 							int len=snprintf(write_buffer,IRC_WRITE_BUFFER_LEN,"%li",read_ptr_end-read_ptr_begin);
-							irc_send_message(id,message->command.privmsg.target,STRING(write_buffer,len));
+							irc_send_message(id,message->command.privmsg.target,STRINGP(write_buffer,len));
 							goto SuccessCommand;
 						}
 						//Google
-						if(strneq(command.chrs,"google",6)){
-							int len = sputstring(STRING(write_buffer,IRC_WRITE_BUFFER_LEN),2,
-								STRING("https://www.google.com/search?q=",32),
-								STRING(read_ptr_begin,read_ptr_end-read_ptr_begin)
+						if(Data_equals(command.ptr,"google",6)){
+							int len = Stringp_sput(STRINGP(write_buffer,IRC_WRITE_BUFFER_LEN),2,
+								STRINGP("https://www.google.com/search?q=",32),
+								STRINGP(read_ptr_begin,read_ptr_end-read_ptr_begin)
 							);
-							irc_send_message(id,message->command.privmsg.target,STRING(write_buffer,len));
+							irc_send_message(id,message->command.privmsg.target,STRINGP(write_buffer,len));
 							goto SuccessCommand;
 						}
 						goto UnknownCommand;
 					case 7:
 						//Reverse
-						if(strneq(command.chrs,"reverse",7)){
+						if(Data_equals(command.ptr,"reverse",7)){
 							char* write_ptr = write_buffer;
 							read_ptr = read_ptr_end;
 							while(read_ptr>read_ptr_begin)
 								*write_ptr++=*--read_ptr;
-							irc_send_message(id,message->command.privmsg.target,STRING(write_buffer,read_ptr_end-read_ptr_begin));
+							irc_send_message(id,message->command.privmsg.target,STRINGP(write_buffer,read_ptr_end-read_ptr_begin));
 							goto SuccessCommand;
 						}
 						goto UnknownCommand;
 					case 9:
 						//Word count
-						if(strneq(command.chrs,"wordcount",9)){
+						if(Data_equals(command.ptr,"wordcount",9)){
 							unsigned int count=0;
 							while(read_ptr<read_ptr_end)
 								if(*read_ptr++==' ')
 									++count;
 
 							int len=snprintf(write_buffer,IRC_WRITE_BUFFER_LEN,"Word Count: %u words",count);
-							irc_send_message(id,message->command.privmsg.target,STRING(write_buffer,len));
+							irc_send_message(id,message->command.privmsg.target,STRINGP(write_buffer,len));
 							goto SuccessCommand;
 						}
 						goto UnknownCommand;
 					case 10:
 						//Magic 8-ball
-						if(strneq(command.chrs,"magic8ball",10)){
+						if(Data_equals(command.ptr,"magic8ball",10)){
 							unsigned short len=0;
 							if(read_ptr_end-read_ptr_begin<2 || *(read_ptr_end-1)!='?'){
 								len=20;memcpy(write_buffer,"Ask a question first",len);
@@ -221,18 +225,18 @@ void onMessageFunc(irc_connection_id id,const irc_message* message){
 									len=9;memcpy(write_buffer,"Try again",len);
 								}
 							}
-							irc_send_message(id,message->command.privmsg.target,STRING(write_buffer,len));
+							irc_send_message(id,message->command.privmsg.target,STRINGP(write_buffer,len));
 							goto SuccessCommand;
 						}
 						goto UnknownCommand;
 				}
 
 				UnknownCommand:{
-					int len = sputstring(STRING(write_buffer,IRC_WRITE_BUFFER_LEN),2,
-						STRING("Unknown command: ",17),
+					int len = Stringp_sput(STRINGP(write_buffer,IRC_WRITE_BUFFER_LEN),2,
+						STRINGP("Unknown command: ",17),
 						command
 					);
-					irc_send_message(id,message->command.privmsg.target,STRING(write_buffer,len));
+					irc_send_message(id,message->command.privmsg.target,STRINGP(write_buffer,len));
 				}
 			}
 			SuccessCommand:
@@ -256,9 +260,9 @@ int main(){
 		}
 
 		//Print the raw message that was received
-		fputsn(read_buffer,read_len,stdout);
+		Stringp_put(STRINGP(read_buffer,read_len),stdout);
 
-		irc_parse_message(connection_id,STRING(read_buffer,read_len),&onMessageFunc);
+		irc_parse_message(connection_id,STRINGP(read_buffer,read_len),&onMessageFunc);
 	}	
 	return EXIT_SUCCESS;
 }

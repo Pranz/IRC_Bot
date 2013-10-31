@@ -1,7 +1,7 @@
 #ifndef __LOLIROFLE_IRC_IRC_H_INCLUDED__
 #define __LOLIROFLE_IRC_IRC_H_INCLUDED__
 
-#include "String.h"
+#include <lolie/Stringp.h>
 
 #define IRC_BUFFER_LENGTH 512
 #define IRC_FORMAT_BUFFER_LENGTH 512
@@ -25,18 +25,18 @@ typedef enum irc_message_command_type{
 }irc_message_command_type;
 
 typedef struct irc_message{
-	string raw_message;
+	Stringp raw_message;
 
 	irc_message_prefix_type prefix_type;
 	union{
 		struct{
-			string nickname;
-			string username;
-			string host;
+			Stringp nickname;
+			Stringp username;
+			Stringp host;
 		}user;
 
 		struct{
-			string name;
+			Stringp name;
 		}server;
 	}prefix;
 
@@ -46,16 +46,16 @@ typedef struct irc_message{
 	};
 	union{
 		struct{
-			string channel;
+			Stringp channel;
 		}join;
 
 		struct{
-			string channel;
+			Stringp channel;
 		}part;
 
 		struct{
-			string target;
-			string text;
+			Stringp target;
+			Stringp text;
 		}privmsg;
 	}command;
 }irc_message;
@@ -70,7 +70,7 @@ typedef int irc_connection_id;
  *
  * @param id  Id of the connection
  * @param str String to be sent
- * @param len Length of string to be sent
+ * @param len Length of Stringp to be sent
  */
 void irc_send_raw(irc_connection_id id,const char* str,size_t len);
 
@@ -129,8 +129,8 @@ inline void irc_join_channel(irc_connection_id id,const char* channel){
 	irc_send_rawf(id,"JOIN %s\r\n",channel);
 }
 
-void irc_parse_message(irc_connection_id id,string raw_message,void(*onMessageFunc)(irc_connection_id id,const irc_message* message));
+void irc_parse_message(irc_connection_id id,Stringp raw_message,void(*onMessageFunc)(irc_connection_id id,const irc_message* message));
 
-void irc_send_message(irc_connection_id id,string target,string message);
+void irc_send_message(irc_connection_id id,Stringp target,Stringp message);
 
 #endif
