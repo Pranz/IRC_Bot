@@ -18,7 +18,7 @@
  */
 #define IRC_WRITE_BUFFER_LEN 512
 char write_buffer[IRC_WRITE_BUFFER_LEN];
-Stringp command_prefix = {"!",1};
+Stringp command_prefix;
 char command_separator = ' ',
      command_arg_separator = ' ';
 enum Languages language = LANG_SWEDISH;
@@ -28,7 +28,7 @@ void onMessageFunc(irc_connection_id id,const irc_message* message){
 		case IRC_MESSAGE_COMMAND_NUMBER:
 			if(message->command_type_number == 1){
 				irc_join_channel(id,"#bot");
-				irc_join_channel(id,"#toa");
+				//irc_join_channel(id,"#toa");
 			}
 			break;
 		case IRC_MESSAGE_COMMAND_PRIVMSG:
@@ -235,6 +235,29 @@ void onMessageFunc(irc_connection_id id,const irc_message* message){
 							irc_send_message(id,message->command.privmsg.target,STRINGP(write_buffer,len));
 							goto SuccessCommand;
 						}
+						//Prefix
+						if(Data_equals(command.ptr,"prefix",6)){
+							int len = read_ptr_end-read_ptr_begin;
+							if(len>0){
+								free(command_prefix.ptr);
+								command_prefix = STRINGP(malloc(len),len);
+								memcpy(command_prefix.ptr,read_ptr_begin,len);
+								int write_len = Stringp_sput(STRINGP(write_buffer,IRC_WRITE_BUFFER_LEN),3,
+									STRINGP("Command prefix set to \"",23),
+									STRINGP(read_ptr_begin,len),
+									STRINGP("\"",1)
+								);
+								irc_send_message(id,message->command.privmsg.target,STRINGP(write_buffer,write_len));
+							}else{
+								int write_len = Stringp_sput(STRINGP(write_buffer,IRC_WRITE_BUFFER_LEN),3,
+									STRINGP("Command prefix is currently \"",29),
+									command_prefix,
+									STRINGP("\"",1)
+								);
+								irc_send_message(id,message->command.privmsg.target,STRINGP(write_buffer,write_len));
+							}
+							goto SuccessCommand;
+						}
 						goto UnknownCommand;
 					case 7:
 						//Reverse
@@ -329,6 +352,9 @@ void onMessageFunc(irc_connection_id id,const irc_message* message){
 }
 
 int main(){
+	command_prefix = STRINGP(malloc(1),1);
+	command_prefix.ptr[0]='!';
+
 	irc_connection_id connection_id=irc_connect("flygande-toalett.tk",1568);
 	irc_set_nickname(connection_id,"Toabot");
 	irc_set_username(connection_id,"Bot");
