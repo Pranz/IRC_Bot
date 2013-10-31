@@ -2,7 +2,7 @@ CC=gcc
 CFLAGS= -Wall -std=gnu99
 LDFLAGS= 
 
-LIBS=lolie
+LIBS=lolie ssl crypto
 BINDIR=bin
 OBJDIR=obj
 SRCDIR=src

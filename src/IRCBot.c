@@ -2,9 +2,13 @@
 #include <unistd.h>//Unix standard library
 #include <string.h>
 
+#include <openssl/md4.h>
+#include <openssl/md5.h>
+
 #include <lolie/Stringp.h>
 #include <lolie/LinkedList.h>
 #include <lolie/Memory.h>
+#include <lolie/Math.h>
 
 #include "irc.h"
 #include "Locale.h"
@@ -14,8 +18,8 @@
  */
 #define IRC_WRITE_BUFFER_LEN 512
 char write_buffer[IRC_WRITE_BUFFER_LEN];
-char command_prefix = '!',
-     command_separator = ' ',
+Stringp command_prefix = {"!",1};
+char command_separator = ' ',
      command_arg_separator = ' ';
 enum Languages language = LANG_SWEDISH;
 
@@ -28,10 +32,13 @@ void onMessageFunc(irc_connection_id id,const irc_message* message){
 			}
 			break;
 		case IRC_MESSAGE_COMMAND_PRIVMSG:
-			//If on a channel with a '#' prefix and the private message has a : prefix
-			if(message->command.privmsg.target.ptr[0] == '#' && message->command.privmsg.text.ptr[0] == command_prefix){
+			//If on a channel with a '#' prefix and the private message has the correct prefix
+			if(message->command.privmsg.target.ptr[0] == '#'){
+				if(message->command.privmsg.text.length<=command_prefix.length || !Data_equals(message->command.privmsg.text.ptr,command_prefix.ptr,command_prefix.length))
+					break;
+
 				//Initialize read pointers
-				char* read_ptr = message->command.privmsg.text.ptr+1,
+				char* read_ptr = message->command.privmsg.text.ptr+command_prefix.length,
 				    * read_ptr_begin = read_ptr,
 				    * read_ptr_end = message->command.privmsg.text.ptr+message->command.privmsg.text.length;
 
@@ -43,10 +50,44 @@ void onMessageFunc(irc_connection_id id,const irc_message* message){
 
 				//Commands
 				switch(command.length){
+    					case 3:
+						//md5
+						if(Data_equals(command.ptr,"md5",3)){
+							unsigned char md5_buffer[MD5_DIGEST_LENGTH];
+
+							MD5_CTX context;
+							MD5_Init(&context);
+							MD5_Update(&context,read_ptr_begin,read_ptr_end-read_ptr_begin);
+							MD5_Final(md5_buffer,&context);
+
+							char* write_ptr=write_buffer;
+							for(unsigned int i=0;i<MD5_DIGEST_LENGTH;++i)
+								write_ptr+=sprintf(write_ptr,"%02x",md5_buffer[i]);
+
+							irc_send_message(id,message->command.privmsg.target,STRINGP(write_buffer,write_ptr-write_buffer));
+							goto SuccessCommand;
+						}
+						//md4
+						if(Data_equals(command.ptr,"md4",3)){
+							unsigned char md4_buffer[MD4_DIGEST_LENGTH];
+
+							MD4_CTX context;
+							MD4_Init(&context);
+							MD4_Update(&context,read_ptr_begin,read_ptr_end-read_ptr_begin);
+							MD4_Final(md4_buffer,&context);
+
+							char* write_ptr=write_buffer;
+							for(unsigned int i=0;i<MD4_DIGEST_LENGTH;++i)
+								write_ptr+=sprintf(write_ptr,"%02x",md4_buffer[i]);
+
+							irc_send_message(id,message->command.privmsg.target,STRINGP(write_buffer,write_ptr-write_buffer));
+							goto SuccessCommand;
+						}
+						goto UnknownCommand;
 					case 4:
 						//Bool
 						if(Data_equals(command.ptr,"bool",4)){
-							irc_send_message(id,message->command.privmsg.target,rand()%2?STRINGP("true",4):STRINGP("false",5));
+							irc_send_message(id,message->command.privmsg.target,locale[language].boolean[rand()%2]);
 							goto SuccessCommand;
 						}
 						//Dice
@@ -144,7 +185,33 @@ void onMessageFunc(irc_connection_id id,const irc_message* message){
 					case 6:
 						//Random
 						if(Data_equals(command.ptr,"random",6)){
-							int len=snprintf(write_buffer,IRC_WRITE_BUFFER_LEN,"%u (0 to %u)",rand(),RAND_MAX);
+							unsigned int value=rand(),min=1,max=RAND_MAX;
+
+							if(read_ptr_end-read_ptr_begin>0)//If argument 1 exists (random <max>)
+								while(true)
+									if(read_ptr>read_ptr_begin && (read_ptr>=read_ptr_end || read_ptr[0]==' ')){
+										max=decStr2int(read_ptr_begin,MIN(read_ptr-read_ptr_begin,9));
+										read_ptr_begin=++read_ptr;
+
+										if(read_ptr_end-read_ptr_begin>0)//If argument 2 exists (random <min> <max>)
+											while(true)
+												if(read_ptr>read_ptr_begin && (read_ptr>=read_ptr_end || read_ptr[0]==' ')){
+													min=max;
+													max=decStr2int(read_ptr_begin,MIN(read_ptr-read_ptr_begin,9));
+													read_ptr_begin=++read_ptr;
+													break;
+												}
+												else if(read_ptr[0]>='0' && read_ptr[0]<='9')
+													++read_ptr;
+												else
+													break;
+										break;
+									}
+									else if(read_ptr[0]>='0' && read_ptr[0]<='9')
+										++read_ptr;
+									else
+										break;
+							int len=snprintf(write_buffer,IRC_WRITE_BUFFER_LEN,"%u (%u to %u)",max>min?(value%(max-min+1))+min:value,min,max);
 							irc_send_message(id,message->command.privmsg.target,STRINGP(write_buffer,len));
 							goto SuccessCommand;
 						}
@@ -192,6 +259,9 @@ void onMessageFunc(irc_connection_id id,const irc_message* message){
 							irc_send_message(id,message->command.privmsg.target,locale[language].language.unknown);
 							goto SuccessCommand;
 						}
+						//Shutdown
+						if(Data_equals(command.ptr,"shutdown",8))
+							exit(0);
 						goto UnknownCommand;
 					case 9:
 						//Word count

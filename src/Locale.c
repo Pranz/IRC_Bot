@@ -3,6 +3,10 @@
 const struct Locale locale[2]={
 	[LANG_SWEDISH]={
 		.lang_name={"swedish",7},
+		.boolean={
+			{"falskt",6},
+			{"sant",4}
+		},
 		.language={
 			.set={"Språk är satt till svenska",26+2},
 			.unknown={"Språket finns inte att välja bland",34+2}
@@ -41,6 +45,10 @@ const struct Locale locale[2]={
 	},
 	[LANG_ENGLISH]={
 		.lang_name={"english",7},
+		.boolean={
+			{"false",5},
+			{"true",4}
+		},
 		.language={
 			.set={"Language is set to english",26},
 			.unknown={"Unknown language",16}

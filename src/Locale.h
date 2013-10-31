@@ -6,6 +6,8 @@
 struct Locale{
 	Stringp lang_name;
 
+	Stringp boolean[2];
+
 	struct{
 		Stringp set;
 		Stringp unknown;
