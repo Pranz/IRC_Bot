@@ -1,6 +1,7 @@
 #include <stdio.h> //Input/output
 #include <unistd.h>//Unix standard library
 #include <string.h>
+#include <time.h>
 
 #include <openssl/md4.h>
 #include <openssl/md5.h>
@@ -23,12 +24,14 @@ char command_separator = ' ',
      command_arg_separator = ' ';
 enum Languages language = LANG_SWEDISH;
 
+#define VERSION_SIGNATURE "Flygande Toalett IRC Bot v1.0-20131101"
+
 void onMessageFunc(irc_connection_id id,const irc_message* message){
 	switch(message->command_type){
 		case IRC_MESSAGE_COMMAND_NUMBER:
 			if(message->command_type_number == 1){
 				irc_join_channel(id,"#bot");
-				//irc_join_channel(id,"#toa");
+				irc_join_channel(id,"#toa");
 			}
 			break;
 		case IRC_MESSAGE_COMMAND_PRIVMSG:
@@ -50,7 +53,7 @@ void onMessageFunc(irc_connection_id id,const irc_message* message){
 
 				//Commands
 				switch(command.length){
-    					case 3:
+    				case 3:
 						//md5
 						if(Data_equals(command.ptr,"md5",3)){
 							unsigned char md5_buffer[MD5_DIGEST_LENGTH];
@@ -110,7 +113,7 @@ void onMessageFunc(irc_connection_id id,const irc_message* message){
 						//Wikipedia
 						if(Data_equals(command.ptr,"wiki",4)){
 							int len = Stringp_sput(STRINGP(write_buffer,IRC_WRITE_BUFFER_LEN),2,
-								STRINGP("http://en.wikipedia.org/wiki/",51),
+								STRINGP("http://en.wikipedia.org/wiki/",29),
 								STRINGP(read_ptr_begin,read_ptr_end-read_ptr_begin)
 							);
 							irc_send_message(id,message->command.privmsg.target,STRINGP(write_buffer,len));
@@ -122,6 +125,15 @@ void onMessageFunc(irc_connection_id id,const irc_message* message){
 								STRINGP("http://www.imdb.com/find?s=all&q=",33),
 								STRINGP(read_ptr_begin,read_ptr_end-read_ptr_begin)
 							);
+							irc_send_message(id,message->command.privmsg.target,STRINGP(write_buffer,len));
+							goto SuccessCommand;
+						}
+						//Date
+						if(Data_equals(command.ptr,"date",4)){
+							time_t t;time(&t);
+  							struct tm* time_data = localtime(&t);
+
+							int len = strftime(write_buffer,IRC_WRITE_BUFFER_LEN,"%F %X %Z, %A v.%V, Day %j of the year",time_data);
 							irc_send_message(id,message->command.privmsg.target,STRINGP(write_buffer,len));
 							goto SuccessCommand;
 						}
@@ -267,6 +279,14 @@ void onMessageFunc(irc_connection_id id,const irc_message* message){
 							while(read_ptr>read_ptr_begin)
 								*write_ptr++=*--read_ptr;
 							irc_send_message(id,message->command.privmsg.target,STRINGP(write_buffer,read_ptr_end-read_ptr_begin));
+							goto SuccessCommand;
+						}
+						//Version
+						if(Data_equals(command.ptr,"version",7)){
+							irc_send_message(id,message->command.privmsg.target,STRINGP(
+								VERSION_SIGNATURE,
+								strlen(VERSION_SIGNATURE)
+							));
 							goto SuccessCommand;
 						}
 						goto UnknownCommand;
