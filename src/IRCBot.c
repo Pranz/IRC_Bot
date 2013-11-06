@@ -412,9 +412,11 @@ void onCommand(irc_connection_id id,Stringp command,Stringp target,const char* a
 	}
 
 	UnknownCommand:{
-		int len = Stringp_sput(STRINGP(write_buffer,IRC_WRITE_BUFFER_LEN),2,
+		int len = Stringp_sput(STRINGP(write_buffer,IRC_WRITE_BUFFER_LEN),4,
 			locale[language].unknown_command,
-			command
+			STRINGP(": \"",3),
+			command,
+			STRINGP("\"",1)
 		);
 		irc_send_message(id,target,STRINGP(write_buffer,len));
 	}
@@ -427,7 +429,7 @@ void onMessageFunc(irc_connection_id id,const irc_message* message){
 		case IRC_MESSAGE_COMMAND_NUMBER:
 			if(message->command_type_number == 1){
 				irc_join_channel(id,"#bot");
-				//irc_join_channel(id,"#toa");
+				irc_join_channel(id,"#toa");
 			}
 			break;
 		case IRC_MESSAGE_COMMAND_PRIVMSG:{
