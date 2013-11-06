@@ -21,6 +21,11 @@ struct Locale{
 		Stringp failure;
 	}magic8ball;
 
+	struct{
+		Stringp set;
+		Stringp get;
+	}prefix;
+
 	Stringp unknown_command;
 };
 

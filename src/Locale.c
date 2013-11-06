@@ -41,6 +41,12 @@ const struct Locale locale[2]={
 			},
 			.failure={"Prova igen",10}
 		},
+
+		.prefix={
+			.get={"Kommandoprefix är för tillfället",32+3},
+			.set={"Kommandoprefix är satt till",27+1}
+		},
+
 		.unknown_command={"Okänt kommando: ",14+1}
 	},
 	[LANG_ENGLISH]={
@@ -83,6 +89,12 @@ const struct Locale locale[2]={
 			},
 			.failure={"Try again",9}
 		},
+
+		.prefix={
+			.get={"Command prefix is currently",27},
+			.set={"Command prefix set to",21}
+		},
+
 		.unknown_command={"Unknown command: ",17}
 	}
 };
