@@ -31,7 +31,10 @@ irc_connection_id irc_connect(const char* host,unsigned short port){
 	hints.ai_socktype = SOCK_STREAM;
 	getaddrinfo(host,portStr,&hints,&res);
 	irc_connection_id id = socket(res->ai_family,res->ai_socktype,res->ai_protocol);
-	connect(id,res->ai_addr,res->ai_addrlen);
+
+	int connection = connect(id,res->ai_addr,res->ai_addrlen);
+	if(connection<0)
+		printf("Error: connect() returned %i\n",connection);
 
 	return id;
 }

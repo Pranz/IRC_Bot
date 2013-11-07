@@ -26,6 +26,7 @@ struct Locale{
 		Stringp get;
 	}prefix;
 
+	Stringp missing_argument;
 	Stringp unknown_command;
 };
 

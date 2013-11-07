@@ -11,9 +11,14 @@
 #include <lolie/Memory.h>
 #include <lolie/Math.h>
 #include <lolie/ControlStructures.h>
+#include <lolie/url.c>
 
 #include "irc.h"
 #include "Locale.h"
+
+//TODO: "&&"" to combine commands and maybe `command` to insert a command with output as return value to an argument
+//TODO: Help pages for a list of commands and syntax, explanation, etc.
+//TODO: Command aliases
 
 /**
  * Buffer initialization
@@ -21,12 +26,12 @@
 #define IRC_WRITE_BUFFER_LEN 512
 char write_buffer[IRC_WRITE_BUFFER_LEN];
 Stringp command_prefix;
-Stringp bot_nickname = {"Toabot",6};
+Stringp bot_nickname;//TODO: irc connect should store this information and be able to change it
 char command_separator = ' ',
      command_arg_separator = ' ';
 enum Languages language = LANG_SWEDISH;
 
-#define VERSION_SIGNATURE "Flygande Toalett IRC Bot v1.0.2-20131106"
+Stringp version_signature;
 
 Stringp string_splitted(Stringp str,size_t(*delimiterFunc)(Stringp str),bool(*onSplitFunc)(const char* begin,const char* end)){
 	const char* arg_begin=str.ptr;
@@ -62,6 +67,44 @@ Stringp string_splitted_delim(Stringp str,Stringp delimiter,bool(*onSplitFunc)(c
 			return 0;
 	}),onSplitFunc);
 }
+
+struct CommandArgument{
+	Stringp name;
+	enum{
+		COMMAND_ARGUMENT_TYPE_INTEGER,
+		COMMAND_ARGUMENT_TYPE_STRING,
+		COMMAND_ARGUMENT_TYPE_FLOATINGPOINT,
+	}type;
+	union{
+		struct{
+			int min;
+			int max;
+		}integer;
+
+		struct{
+			int min_length;
+			int max_length;
+			Stringp regex_allowed;
+		}string;
+
+		struct{
+			float min;
+			float max;
+		}floatingpoint;
+	}typedata;
+	enum{
+		COMMAND_ARGUMENT_REQUIRED,
+		COMMAND_ARGUMENT_OPTIONAL,
+		COMMAND_ARGUMENT_VARARG
+	}requirement;
+};
+
+struct Command{
+	Stringp name;
+	Stringp help;
+	Stringp delimiter;
+	struct CommandArgument args[];
+};
 
 void onCommand(irc_connection_id id,Stringp command,Stringp target,const char* arg_begin,const char* arg_end,const irc_message* message){
 	const char* read_ptr = arg_begin;
@@ -126,19 +169,19 @@ void onCommand(irc_connection_id id,Stringp command,Stringp target,const char* a
 			}
 			//Wikipedia
 			if(Data_equals(command.ptr,"wiki",4)){
-				int len = Stringp_sput(STRINGP(write_buffer,IRC_WRITE_BUFFER_LEN),2,
-					STRINGP("http://en.wikipedia.org/wiki/",29),
-					STRINGP(arg_begin,arg_end-arg_begin)
+				int len = Stringp_sput(STRINGP(write_buffer,IRC_WRITE_BUFFER_LEN),1,
+					Stringp_from_cstr("http://en.wikipedia.org/wiki/")
 				);
+				len+=url_encode(STRINGP(arg_begin,arg_end-arg_begin),STRINGP(write_buffer+len,IRC_WRITE_BUFFER_LEN-len));
 				irc_send_message(id,target,STRINGP(write_buffer,len));
 				goto SuccessCommand;
 			}
 			//IMDb
 			if(Data_equals(command.ptr,"imdb",4)){
-				int len = Stringp_sput(STRINGP(write_buffer,IRC_WRITE_BUFFER_LEN),2,
-					STRINGP("http://www.imdb.com/find?s=all&q=",33),
-					STRINGP(arg_begin,arg_end-arg_begin)
+				int len = Stringp_sput(STRINGP(write_buffer,IRC_WRITE_BUFFER_LEN),1,
+					Stringp_from_cstr("http://www.imdb.com/find?s=all&q=")
 				);
+				len+=url_encode(STRINGP(arg_begin,arg_end-arg_begin),STRINGP(write_buffer+len,IRC_WRITE_BUFFER_LEN-len));
 				irc_send_message(id,target,STRINGP(write_buffer,len));
 				goto SuccessCommand;
 			}
@@ -244,7 +287,7 @@ void onCommand(irc_connection_id id,Stringp command,Stringp target,const char* a
 			//Choose
 			if(Data_equals(command.ptr,"choose",6)){
 				if(arg_begin>=arg_end){
-					irc_send_message(id,target,STRINGP("Missing arguments",17));
+					irc_send_message(id,target,locale[language].missing_argument);
 					goto SuccessCommand;
 				}
 
@@ -291,10 +334,10 @@ void onCommand(irc_connection_id id,Stringp command,Stringp target,const char* a
 			}
 			//Google
 			if(Data_equals(command.ptr,"google",6)){
-				int len = Stringp_sput(STRINGP(write_buffer,IRC_WRITE_BUFFER_LEN),2,
-					STRINGP("https://www.google.com/search?q=",32),
-					STRINGP(arg_begin,arg_end-arg_begin)
+				int len = Stringp_sput(STRINGP(write_buffer,IRC_WRITE_BUFFER_LEN),1,
+					Stringp_from_cstr("https://www.google.com/search?q=")
 				);
+				len+=url_encode(STRINGP(arg_begin,arg_end-arg_begin),STRINGP(write_buffer+len,IRC_WRITE_BUFFER_LEN-len));
 				irc_send_message(id,target,STRINGP(write_buffer,len));
 				goto SuccessCommand;
 			}
@@ -336,10 +379,7 @@ void onCommand(irc_connection_id id,Stringp command,Stringp target,const char* a
 			}
 			//Version
 			if(Data_equals(command.ptr,"version",7)){
-				irc_send_message(id,target,STRINGP(
-					VERSION_SIGNATURE,
-					strlen(VERSION_SIGNATURE)
-				));
+				irc_send_message(id,target,version_signature);
 				goto SuccessCommand;
 			}
 			goto UnknownCommand;
@@ -369,6 +409,11 @@ void onCommand(irc_connection_id id,Stringp command,Stringp target,const char* a
 
 				int len=snprintf(write_buffer,IRC_WRITE_BUFFER_LEN,"%u words",count);
 				irc_send_message(id,target,STRINGP(write_buffer,len));
+				goto SuccessCommand;
+			}
+			//URL encode
+			if(Data_equals(command.ptr,"urlencode",9)){
+				irc_send_message(id,target,STRINGP(write_buffer,url_encode(STRINGP(arg_begin,arg_end-arg_begin),STRINGP(write_buffer,IRC_WRITE_BUFFER_LEN))));
 				goto SuccessCommand;
 			}
 			goto UnknownCommand;
@@ -429,7 +474,7 @@ void onMessageFunc(irc_connection_id id,const irc_message* message){
 		case IRC_MESSAGE_COMMAND_NUMBER:
 			if(message->command_type_number == 1){
 				irc_join_channel(id,"#bot");
-				irc_join_channel(id,"#toa");
+				//irc_join_channel(id,"#toa");
 			}
 			break;
 		case IRC_MESSAGE_COMMAND_PRIVMSG:{
@@ -444,7 +489,7 @@ void onMessageFunc(irc_connection_id id,const irc_message* message){
 				read_ptr_begin=++read_ptr;
 
 				//Commands
-				onCommand(id,command,target,read_ptr_begin,read_ptr_end,message);
+				onCommand(id,command,target,MIN(read_ptr_begin,read_ptr_end),read_ptr_end,message);
 			}
 
 			//If private message command
@@ -463,6 +508,9 @@ void onMessageFunc(irc_connection_id id,const irc_message* message){
 }
 
 int main(){
+	bot_nickname = Stringp_from_cstr("Toabot");
+	version_signature = Stringp_from_cstr("Flygande Toalett IRC Bot v1.0.3-20131107");
+
 	command_prefix = STRINGP(malloc(1),1);
 	command_prefix.ptr[0]='!';
 
