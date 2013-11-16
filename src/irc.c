@@ -7,6 +7,7 @@
 
 #include <lolie/Stringp.h>//Null terminatd Stringp operations
 #include <lolie/Memory.h>//Data_equals
+#include <lolie/LinkedList.h>
 
 #include <unistd.h>//Unix standard library
 #include <netdb.h> //Networking
@@ -124,11 +125,13 @@ void irc_parse_message(irc_connection_id id,Stringp raw_message,void(*onMessageF
 						}
 						break;
 					case 4:
-						if(Data_equals(read_ptr_begin,"JOIN",4))
+						if(Data_equals(read_ptr_begin,"JOIN",4)){
 							message.command_type = IRC_MESSAGE_COMMAND_JOIN;
-						else if(Data_equals(read_ptr_begin,"PART",4))
+							message.command.join.channels=NULL;
+						}else if(Data_equals(read_ptr_begin,"PART",4)){
 							message.command_type = IRC_MESSAGE_COMMAND_PART;
-						else if(Data_equals(read_ptr_begin,"NICK",4))
+							message.command.part.channels=NULL;
+						}else if(Data_equals(read_ptr_begin,"NICK",4))
 							message.command_type = IRC_MESSAGE_COMMAND_NICK;
 						else if(Data_equals(read_ptr_begin,"KICK",4))
 							message.command_type = IRC_MESSAGE_COMMAND_KICK;
@@ -174,6 +177,11 @@ void irc_parse_message(irc_connection_id id,Stringp raw_message,void(*onMessageF
 						case IRC_MESSAGE_COMMAND_PRIVMSG:
 							message.command.privmsg.target = STRINGP(read_ptr_begin,read_ptr-read_ptr_begin);
 							break;
+						case IRC_MESSAGE_COMMAND_JOIN:{
+							Stringp* tmp = malloc(sizeof(Stringp*));
+							*tmp = STRINGP(read_ptr_begin,read_ptr-read_ptr_begin);
+							LinkedList_push(&message.command.part.channels,tmp);
+						}	break;
 					}
 					if(*++read_ptr == ':')
 						++read_ptr;

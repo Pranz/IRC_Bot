@@ -508,7 +508,7 @@ void onMessageFunc(irc_connection_id id,const irc_message* message){
 }
 
 int main(){
-	bot_nickname = Stringp_from_cstr("Toabot");
+	bot_nickname = Stringp_from_cstr("Toabot2");
 	version_signature = Stringp_from_cstr("Flygande Toalett IRC Bot v1.0.3-20131107");
 
 	command_prefix = STRINGP(malloc(1),1);

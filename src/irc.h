@@ -2,6 +2,7 @@
 #define __LOLIROFLE_IRC_IRC_H_INCLUDED__
 
 #include <lolie/Stringp.h>
+#include <lolie/LinkedList.h>
 
 #define IRC_BUFFER_LENGTH 512
 #define IRC_FORMAT_BUFFER_LENGTH 512
@@ -46,11 +47,11 @@ typedef struct irc_message{
 	};
 	union{
 		struct{
-			Stringp channel;
+			LinkedList/*<Stringp>*/* channels;
 		}join;
 
 		struct{
-			Stringp channel;
+			LinkedList/*<Stringp>*/* channels;
 		}part;
 
 		struct{
