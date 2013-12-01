@@ -26,4 +26,5 @@ bin/*
 lib/*
 obj/*
 old/*
+other/*
 target/*

@@ -6,7 +6,7 @@
 #include <string.h>
 
 #include <lolie/Stringp.h>//Null terminatd Stringp operations
-#include <lolie/Memory.h>//Data_equals
+#include <lolie/Memory.h>//Memory_equals
 
 #include <unistd.h>//Unix standard library
 #include <netdb.h> //Networking
@@ -52,7 +52,7 @@ inline void irc_send_rawnt(irc_connection_id id,const char* str){
 inline void irc_send_message(irc_connection_id id,Stringp target,Stringp message){
 	char write_buffer[message.length+target.length+12];
 
-	int len = Stringp_sput(STRINGP(write_buffer,IRC_BUFFER_LENGTH),5,
+	int len = Stringp_vcopy(STRINGP(write_buffer,IRC_BUFFER_LENGTH),5,
 		STRINGP("PRIVMSG ",8),
 		target,
 		STRINGP(" :",2),
@@ -124,25 +124,25 @@ void irc_parse_message(irc_connection_id id,Stringp raw_message,void(*onMessageF
 						}
 						break;
 					case 4:
-						if(Data_equals(read_ptr_begin,"JOIN",4))
+						if(Memory_equals(read_ptr_begin,"JOIN",4))
 							message.command_type = IRC_MESSAGE_COMMAND_JOIN;
-						else if(Data_equals(read_ptr_begin,"PART",4))
+						else if(Memory_equals(read_ptr_begin,"PART",4))
 							message.command_type = IRC_MESSAGE_COMMAND_PART;
-						else if(Data_equals(read_ptr_begin,"NICK",4))
+						else if(Memory_equals(read_ptr_begin,"NICK",4))
 							message.command_type = IRC_MESSAGE_COMMAND_NICK;
-						else if(Data_equals(read_ptr_begin,"KICK",4))
+						else if(Memory_equals(read_ptr_begin,"KICK",4))
 							message.command_type = IRC_MESSAGE_COMMAND_KICK;
 						break;
 					case 5:
-						if(Data_equals(read_ptr_begin,"TOPIC",5))
+						if(Memory_equals(read_ptr_begin,"TOPIC",5))
 							message.command_type = IRC_MESSAGE_COMMAND_TOPIC;
 						break;
 					case 6:
-						if(Data_equals(read_ptr_begin,"NOTICE",6))
+						if(Memory_equals(read_ptr_begin,"NOTICE",6))
 							message.command_type = IRC_MESSAGE_COMMAND_NOTICE;
 						break;
 					case 7:
-						if(Data_equals(read_ptr_begin,"PRIVMSG",7))
+						if(Memory_equals(read_ptr_begin,"PRIVMSG",7))
 							message.command_type = IRC_MESSAGE_COMMAND_PRIVMSG;
 						break;
 				}
@@ -193,7 +193,7 @@ void irc_parse_message(irc_connection_id id,Stringp raw_message,void(*onMessageF
 
 	}
 	//Else if it is a ping request 
-	else if(Data_equals(raw_message.ptr,"PING",4)){
+	else if(Memory_equals(raw_message.ptr,"PING",4)){
 		raw_message.ptr[1]='O';//Set buffer to PONG instead of PING
 		irc_send_raw(id,raw_message.ptr,raw_message.length);//Send
 	}
