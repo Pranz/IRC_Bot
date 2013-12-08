@@ -26,7 +26,7 @@ void irc_send_rawf(const irc_connection* connection,const char* format,...){
 
 irc_connection irc_connect(const char* host,unsigned short port){
 	struct addrinfo hints,
-	               *res;
+	               *result;
 	char portStr[6];portStr[long2str((long)port,STRINGP(portStr,6))]='\0';
 
 	printf("Connecting to `%s:%s`\n",host,portStr);
@@ -34,14 +34,20 @@ irc_connection irc_connect(const char* host,unsigned short port){
 	memset(&hints,0,sizeof hints);
 	hints.ai_family = AF_INET;
 	hints.ai_socktype = SOCK_STREAM;
-	getaddrinfo(host,portStr,&hints,&res);
-	const int id = socket(res->ai_family,res->ai_socktype,res->ai_protocol);
+	getaddrinfo(host,portStr,&hints,&result);
+	const int id = socket(result->ai_family,result->ai_socktype,result->ai_protocol);
 
-	int connection = connect(id,res->ai_addr,res->ai_addrlen);
+	int connection = connect(id,result->ai_addr,result->ai_addrlen);
 	if(connection<0)
 		printf("Error: connect() returned %i\n",connection);
 
+	freeaddrinfo(result);
+
 	return (irc_connection){.id=id};
+}
+
+bool irc_disconnect(const irc_connection* connection){
+	return close(connection->id)>=0;
 }
 
 void irc_send_raw(const irc_connection* connection,const char* str,size_t len){
@@ -181,7 +187,7 @@ void irc_parse_message(const irc_connection* connection,Stringp raw_message,void
 							message.command.privmsg.target = STRINGP(read_ptr_begin,read_ptr-read_ptr_begin);
 							break;
 						case IRC_MESSAGE_COMMAND_JOIN:{
-							Stringp* tmp = malloc(sizeof(Stringp*));
+							Stringp* tmp = smalloc(sizeof(Stringp*));
 							*tmp = STRINGP(read_ptr_begin,read_ptr-read_ptr_begin);
 							LinkedList_push(&message.command.channels,tmp);
 						}	break;

@@ -33,16 +33,16 @@ OUTPOSTFIX_BIN=
 OUTPREFIX_LIB=lib
 OUTPOSTFIX_LIB=.so
 
-LDFLAGS_LIB+=-shared -Wl,-soname,$(OUTPREFIX_LIB)$(OUT_LIB)$(OUTPOSTFIX_LIB)
-LDFLAGS_BIN+=-lircinterface -L$(BINDIR)
+LDFLAGS_LIB+= -shared -Wl,-soname,$(OUTPREFIX_LIB)$(OUT_LIB)$(OUTPOSTFIX_LIB)
+LDFLAGS_BIN+= -lircinterface -L$(BINDIR)
 
 all: CFLAGS+= -O3
 all: $(OUT_LIB)
 all: $(OUT_BIN)
 
-debug: CFLAGS+= -g -ftrapv -Wundef -Wpointer-arith -Wcast-align -Wwrite-strings -Wcast-qual -Wswitch-default -Wunreachable-code -Wfloat-equal -Wuninitialized -Wignored-qualifiers
-debug: $(OUT_BIN)
+debug: CFLAGS+= -g -fgnu89-inline -ftrapv -Wundef -Wpointer-arith -Wcast-align -Wwrite-strings -Wcast-qual -Wswitch-default -Wunreachable-code -Wfloat-equal -Wuninitialized -Wignored-qualifiers
 debug: $(OUT_LIB)
+debug: $(OUT_BIN)
 
 $(OBJDIR)/$(SRCDIR_BIN)/%.o: $(SRCDIR_BIN)/%.c
 	$(CC) -I$(SRCDIR)/ -I$(SRCDIR)/$(SRCDIR_BIN) $(CFLAGS) $(CFLAGS_BIN) -o $@ -c $<

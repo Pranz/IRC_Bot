@@ -308,7 +308,7 @@ void onCommand(const irc_connection* connection,Stringp command,Stringp target,c
 					if(begin >= end)
 						return true;
 
-					Stringp* arg = malloc(sizeof(Stringp));
+					Stringp* arg = smalloc(sizeof(Stringp));
 					*arg = STRINGP(begin,end-begin);
 					LinkedList_push(&list,arg);
 
@@ -344,27 +344,27 @@ void onCommand(const irc_connection* connection,Stringp command,Stringp target,c
 			}
 			//Prefix
 			if(Memory_equals(command.ptr,"prefix",6)){
-				int len = arg_end-arg_begin;
+				int len = arg_end-arg_begin,
+				    write_len;
 				if(len>0){
 					free(command_prefix.ptr);
-					command_prefix = STRINGP(malloc(len),len);
+					command_prefix = STRINGP(smalloc(len),len);
 					memcpy(command_prefix.ptr,arg_begin,len);
-					int write_len = Stringp_vcopy(STRINGP(write_buffer,IRC_WRITE_BUFFER_LEN),4,
+					write_len = Stringp_vcopy(STRINGP(write_buffer,IRC_WRITE_BUFFER_LEN),4,
 						locale[language].prefix.set,
 						STRINGP(" \"",2),
 						STRINGP(arg_begin,len),
 						STRINGP("\"",1)
 					);
-					irc_send_message(connection,target,STRINGP(write_buffer,write_len));
 				}else{
-					int write_len = Stringp_vcopy(STRINGP(write_buffer,IRC_WRITE_BUFFER_LEN),4,
+					write_len = Stringp_vcopy(STRINGP(write_buffer,IRC_WRITE_BUFFER_LEN),4,
 						locale[language].prefix.get,
 						STRINGP(" \"",2),
 						command_prefix,
 						STRINGP("\"",1)
 					);
-					irc_send_message(connection,target,STRINGP(write_buffer,write_len));
 				}
+				irc_send_message(connection,target,STRINGP(write_buffer,write_len));
 				goto SuccessCommand;
 			}
 			goto UnknownCommand;
@@ -512,9 +512,10 @@ int main(){
 	bot_nickname = Stringp_from_cstr("Toabot");
 	version_signature = Stringp_from_cstr("Flygande Toalett IRC Bot v1.0.4-20131208");
 
-	command_prefix = STRINGP(malloc(1),1);
+	command_prefix = STRINGP(smalloc(1),1);
 	command_prefix.ptr[0]='!';
 
+	//Connect to server
 	irc_connection connection=irc_connect("server",1568);
 	if(connection.id<0){//Error checking
 		fprintf(stderr,"Error: IRC connection id is a negative value: %i\n",connection.id);
@@ -526,6 +527,14 @@ int main(){
 
 	//While a message is sent from the server
 	while(irc_read(&connection,&onMessageFunc));
+
+	//Disconnect connection
+	if(!irc_disconnect(&connection)){//Error checking
+		fputs("Error: IRC disconnect failed",stderr);
+		return EXIT_FAILURE;
+	}
+
+	free(command_prefix.ptr);
 
 	return EXIT_SUCCESS;
 }

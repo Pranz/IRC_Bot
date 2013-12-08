@@ -133,4 +133,6 @@ void irc_send_message(const irc_connection* connection,Stringp target,Stringp me
 
 bool irc_read(const irc_connection* connection,void(*onMessageFunc)(const irc_connection* connection,const irc_message* message));
 
+bool irc_disconnect(const irc_connection* connection);
+
 #endif
