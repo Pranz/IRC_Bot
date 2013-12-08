@@ -1,5 +1,4 @@
 #include <stdio.h> //Input/output
-#include <unistd.h>//Unix standard library
 #include <string.h>
 #include <time.h>
 
@@ -108,7 +107,7 @@ struct Command{
 	struct CommandArgument args[];
 };
 
-void onCommand(irc_connection_id id,Stringp command,Stringp target,const char* arg_begin,const char* arg_end,const irc_message* message){
+void onCommand(const irc_connection* connection,Stringp command,Stringp target,const char* arg_begin,const char* arg_end,const irc_message* message){
 	const char* read_ptr = arg_begin;
 
 	switch(command.length){
@@ -126,7 +125,7 @@ void onCommand(irc_connection_id id,Stringp command,Stringp target,const char* a
 				for(unsigned int i=0;i<MD5_DIGEST_LENGTH;++i)
 					write_ptr+=sprintf(write_ptr,"%02x",md5_buffer[i]);
 
-				irc_send_message(id,target,STRINGP(write_buffer,write_ptr-write_buffer));
+				irc_send_message(connection,target,STRINGP(write_buffer,write_ptr-write_buffer));
 				goto SuccessCommand;
 			}
 			//md4
@@ -142,31 +141,31 @@ void onCommand(irc_connection_id id,Stringp command,Stringp target,const char* a
 				for(unsigned int i=0;i<MD4_DIGEST_LENGTH;++i)
 					write_ptr+=sprintf(write_ptr,"%02x",md4_buffer[i]);
 
-				irc_send_message(id,target,STRINGP(write_buffer,write_ptr-write_buffer));
+				irc_send_message(connection,target,STRINGP(write_buffer,write_ptr-write_buffer));
 				goto SuccessCommand;
 			}
 			goto UnknownCommand;
 		case 4:
 			//Bool
 			if(Memory_equals(command.ptr,"bool",4)){
-				irc_send_message(id,target,locale[language].boolean[rand()%2]);
+				irc_send_message(connection,target,locale[language].boolean[rand()%2]);
 				goto SuccessCommand;
 			}
 			//Dice
 			if(Memory_equals(command.ptr,"dice",4)){
 				write_buffer[0]=rand()%6+'1';
-				irc_send_message(id,target,STRINGP(write_buffer,1));
+				irc_send_message(connection,target,STRINGP(write_buffer,1));
 				goto SuccessCommand;
 			}
 			//Test
 			if(Memory_equals(command.ptr,"test",4)){
 				for(int i=0;i<5;++i)
-					irc_send_message(id,target,STRINGP("ABCDEF",6));
+					irc_send_message(connection,target,STRINGP("ABCDEF",6));
 				goto SuccessCommand;
 			}
 			//Echo
 			if(Memory_equals(command.ptr,"echo",4)){
-				irc_send_message(id,target,STRINGP(arg_begin,arg_end-arg_begin));
+				irc_send_message(connection,target,STRINGP(arg_begin,arg_end-arg_begin));
 				goto SuccessCommand;
 			}
 			//Wikipedia
@@ -175,7 +174,7 @@ void onCommand(irc_connection_id id,Stringp command,Stringp target,const char* a
 					Stringp_from_cstr("http://en.wikipedia.org/wiki/")
 				);
 				len+=url_encode(STRINGP(arg_begin,arg_end-arg_begin),STRINGP(write_buffer+len,IRC_WRITE_BUFFER_LEN-len));
-				irc_send_message(id,target,STRINGP(write_buffer,len));
+				irc_send_message(connection,target,STRINGP(write_buffer,len));
 				goto SuccessCommand;
 			}
 			//IMDb
@@ -184,7 +183,7 @@ void onCommand(irc_connection_id id,Stringp command,Stringp target,const char* a
 					Stringp_from_cstr("http://www.imdb.com/find?s=all&q=")
 				);
 				len+=url_encode(STRINGP(arg_begin,arg_end-arg_begin),STRINGP(write_buffer+len,IRC_WRITE_BUFFER_LEN-len));
-				irc_send_message(id,target,STRINGP(write_buffer,len));
+				irc_send_message(connection,target,STRINGP(write_buffer,len));
 				goto SuccessCommand;
 			}
 			//Date
@@ -193,7 +192,7 @@ void onCommand(irc_connection_id id,Stringp command,Stringp target,const char* a
 					struct tm* time_data = localtime(&t);
 
 				int len = strftime(write_buffer,IRC_WRITE_BUFFER_LEN,"%F %X %Z, %A v.%V, Day %j of the year",time_data);
-				irc_send_message(id,target,STRINGP(write_buffer,len));
+				irc_send_message(connection,target,STRINGP(write_buffer,len));
 				goto SuccessCommand;
 			}
 			goto UnknownCommand;
@@ -206,7 +205,7 @@ void onCommand(irc_connection_id id,Stringp command,Stringp target,const char* a
 					++read_ptr;
 				}
 
-				irc_send_message(id,target,STRINGP(write_buffer,arg_end-arg_begin));
+				irc_send_message(connection,target,STRINGP(write_buffer,arg_end-arg_begin));
 				goto SuccessCommand;
 			}
 			//Lower
@@ -217,7 +216,7 @@ void onCommand(irc_connection_id id,Stringp command,Stringp target,const char* a
 					++read_ptr;
 				}
 
-				irc_send_message(id,target,STRINGP(write_buffer,arg_end-arg_begin));
+				irc_send_message(connection,target,STRINGP(write_buffer,arg_end-arg_begin));
 				goto SuccessCommand;
 			}
 			//ROT13
@@ -235,7 +234,7 @@ void onCommand(irc_connection_id id,Stringp command,Stringp target,const char* a
 					++read_ptr;
 				}
 
-				irc_send_message(id,target,STRINGP(write_buffer,arg_end-arg_begin));
+				irc_send_message(connection,target,STRINGP(write_buffer,arg_end-arg_begin));
 				goto SuccessCommand;
 			}
 			//ROT47
@@ -249,7 +248,7 @@ void onCommand(irc_connection_id id,Stringp command,Stringp target,const char* a
 					++read_ptr;
 				}
 
-				irc_send_message(id,target,STRINGP(write_buffer,arg_end-arg_begin));
+				irc_send_message(connection,target,STRINGP(write_buffer,arg_end-arg_begin));
 				goto SuccessCommand;
 			}
 			goto UnknownCommand;
@@ -283,13 +282,13 @@ void onCommand(irc_connection_id id,Stringp command,Stringp target,const char* a
 						else
 							break;
 				int len=snprintf(write_buffer,IRC_WRITE_BUFFER_LEN,"%u (%u to %u)",max>min?(value%(max-min+1))+min:value,min,max);
-				irc_send_message(id,target,STRINGP(write_buffer,len));
+				irc_send_message(connection,target,STRINGP(write_buffer,len));
 				goto SuccessCommand;
 			}
 			//Choose
 			if(Memory_equals(command.ptr,"choose",6)){
 				if(arg_begin>=arg_end){
-					irc_send_message(id,target,locale[language].missing_argument);
+					irc_send_message(connection,target,locale[language].missing_argument);
 					goto SuccessCommand;
 				}
 
@@ -319,7 +318,7 @@ void onCommand(irc_connection_id id,Stringp command,Stringp target,const char* a
 				}));
 
 				if(list_length>0)
-					irc_send_message(id,target,*(Stringp*)LinkedList_get(list,rand()%list_length));
+					irc_send_message(connection,target,*(Stringp*)LinkedList_get(list,rand()%list_length));
 
 				LinkedList_clean(&list,function(bool,(void* elem){
 					free(elem);
@@ -331,7 +330,7 @@ void onCommand(irc_connection_id id,Stringp command,Stringp target,const char* a
 			//Length
 			if(Memory_equals(command.ptr,"length",6)){
 				int len=snprintf(write_buffer,IRC_WRITE_BUFFER_LEN,"%li",arg_end-arg_begin);
-				irc_send_message(id,target,STRINGP(write_buffer,len));
+				irc_send_message(connection,target,STRINGP(write_buffer,len));
 				goto SuccessCommand;
 			}
 			//Google
@@ -340,7 +339,7 @@ void onCommand(irc_connection_id id,Stringp command,Stringp target,const char* a
 					Stringp_from_cstr("https://www.google.com/search?q=")
 				);
 				len+=url_encode(STRINGP(arg_begin,arg_end-arg_begin),STRINGP(write_buffer+len,IRC_WRITE_BUFFER_LEN-len));
-				irc_send_message(id,target,STRINGP(write_buffer,len));
+				irc_send_message(connection,target,STRINGP(write_buffer,len));
 				goto SuccessCommand;
 			}
 			//Prefix
@@ -356,7 +355,7 @@ void onCommand(irc_connection_id id,Stringp command,Stringp target,const char* a
 						STRINGP(arg_begin,len),
 						STRINGP("\"",1)
 					);
-					irc_send_message(id,target,STRINGP(write_buffer,write_len));
+					irc_send_message(connection,target,STRINGP(write_buffer,write_len));
 				}else{
 					int write_len = Stringp_vcopy(STRINGP(write_buffer,IRC_WRITE_BUFFER_LEN),4,
 						locale[language].prefix.get,
@@ -364,7 +363,7 @@ void onCommand(irc_connection_id id,Stringp command,Stringp target,const char* a
 						command_prefix,
 						STRINGP("\"",1)
 					);
-					irc_send_message(id,target,STRINGP(write_buffer,write_len));
+					irc_send_message(connection,target,STRINGP(write_buffer,write_len));
 				}
 				goto SuccessCommand;
 			}
@@ -376,12 +375,12 @@ void onCommand(irc_connection_id id,Stringp command,Stringp target,const char* a
 				read_ptr = arg_end;
 				while(read_ptr>arg_begin)
 					*write_ptr++=*--read_ptr;
-				irc_send_message(id,target,STRINGP(write_buffer,arg_end-arg_begin));
+				irc_send_message(connection,target,STRINGP(write_buffer,arg_end-arg_begin));
 				goto SuccessCommand;
 			}
 			//Version
 			if(Memory_equals(command.ptr,"version",7)){
-				irc_send_message(id,target,version_signature);
+				irc_send_message(connection,target,version_signature);
 				goto SuccessCommand;
 			}
 			goto UnknownCommand;
@@ -391,10 +390,10 @@ void onCommand(irc_connection_id id,Stringp command,Stringp target,const char* a
 				for(unsigned int i=0;i<LANG_COUNT;++i)
 					if(Memory_equals(locale[i].lang_name.ptr,arg_begin,locale[i].lang_name.length)){
 						language=i;
-						irc_send_message(id,target,locale[language].language.set);		
+						irc_send_message(connection,target,locale[language].language.set);		
 						goto SuccessCommand;
 					}
-				irc_send_message(id,target,locale[language].language.unknown);
+				irc_send_message(connection,target,locale[language].language.unknown);
 				goto SuccessCommand;
 			}
 			//Shutdown
@@ -410,12 +409,12 @@ void onCommand(irc_connection_id id,Stringp command,Stringp target,const char* a
 						++count;
 
 				int len=snprintf(write_buffer,IRC_WRITE_BUFFER_LEN,"%u words",count);
-				irc_send_message(id,target,STRINGP(write_buffer,len));
+				irc_send_message(connection,target,STRINGP(write_buffer,len));
 				goto SuccessCommand;
 			}
 			//URL encode
 			if(Memory_equals(command.ptr,"urlencode",9)){
-				irc_send_message(id,target,STRINGP(write_buffer,url_encode(STRINGP(arg_begin,arg_end-arg_begin),STRINGP(write_buffer,IRC_WRITE_BUFFER_LEN))));
+				irc_send_message(connection,target,STRINGP(write_buffer,url_encode(STRINGP(arg_begin,arg_end-arg_begin),STRINGP(write_buffer,IRC_WRITE_BUFFER_LEN))));
 				goto SuccessCommand;
 			}
 			goto UnknownCommand;
@@ -452,7 +451,7 @@ void onCommand(irc_connection_id id,Stringp command,Stringp target,const char* a
 						len=locale[language].magic8ball.failure.length;  memcpy(write_buffer,locale[language].magic8ball.failure.ptr,len);
 					}
 				}
-				irc_send_message(id,target,STRINGP(write_buffer,len));
+				irc_send_message(connection,target,STRINGP(write_buffer,len));
 				goto SuccessCommand;
 			}
 			goto UnknownCommand;
@@ -465,18 +464,18 @@ void onCommand(irc_connection_id id,Stringp command,Stringp target,const char* a
 			command,
 			STRINGP("\"",1)
 		);
-		irc_send_message(id,target,STRINGP(write_buffer,len));
+		irc_send_message(connection,target,STRINGP(write_buffer,len));
 	}
 	SuccessCommand:
 		return;
 }
 
-void onMessageFunc(irc_connection_id id,const irc_message* message){
+void onMessageFunc(const irc_connection* connection,const irc_message* message){
 	switch(message->command_type){
 		case IRC_MESSAGE_COMMAND_NUMBER:
 			if(message->command_type_number == 1){
-				irc_join_channel(id,"#bot");
-				irc_join_channel(id,"#toa");
+				irc_join_channel(connection,"#bot");
+				//irc_join_channel(connection,"#toa");
 			}
 			break;
 		case IRC_MESSAGE_COMMAND_PRIVMSG:{
@@ -491,7 +490,7 @@ void onMessageFunc(irc_connection_id id,const irc_message* message){
 				read_ptr_begin=++read_ptr;
 
 				//Commands
-				onCommand(id,command,target,MIN(read_ptr_begin,read_ptr_end),read_ptr_end,message);
+				onCommand(connection,command,target,MIN(read_ptr_begin,read_ptr_end),read_ptr_end,message);
 			}
 
 			//If private message command
@@ -510,30 +509,23 @@ void onMessageFunc(irc_connection_id id,const irc_message* message){
 }
 
 int main(){
-	bot_nickname = Stringp_from_cstr("Toabot2");
-	version_signature = Stringp_from_cstr("Flygande Toalett IRC Bot v1.0.3-20131107");
+	bot_nickname = Stringp_from_cstr("Toabot");
+	version_signature = Stringp_from_cstr("Flygande Toalett IRC Bot v1.0.4-20131208");
 
 	command_prefix = STRINGP(malloc(1),1);
 	command_prefix.ptr[0]='!';
 
-	irc_connection_id connection_id=irc_connect("server",1568);
-	irc_set_nickname(connection_id,bot_nickname.ptr);
-	irc_set_username(connection_id,"Bot");
+	irc_connection connection=irc_connect("server",1568);
+	if(connection.id<0){//Error checking
+		fprintf(stderr,"Error: IRC connection id is a negative value: %i\n",connection.id);
+		return EXIT_FAILURE;
+	}
 
-	char read_buffer[IRC_BUFFER_LENGTH+1];
-	int read_len;
+	irc_set_nickname(&connection,bot_nickname.ptr);
+	irc_set_username(&connection,"Bot");
 
 	//While a message is sent from the server
-	while((read_len = read(connection_id,read_buffer,IRC_BUFFER_LENGTH))){
-		if(read_len<0){//Error checking
-			fprintf(stderr,"Error: read() returned negative value: %i\n",read_len);
-			return EXIT_FAILURE;
-		}
+	while(irc_read(&connection,&onMessageFunc));
 
-		//Print the raw message that was received
-		Stringp_put(STRINGP(read_buffer,read_len),stdout);
-
-		irc_parse_message(connection_id,STRINGP(read_buffer,read_len),&onMessageFunc);
-	}	
 	return EXIT_SUCCESS;
 }

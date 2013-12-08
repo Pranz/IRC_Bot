@@ -3,6 +3,7 @@
 
 #include <lolie/Stringp.h>
 #include <lolie/LinkedList.h>
+size_t strlen(const char* str);
 
 #define IRC_BUFFER_LENGTH 512
 #define IRC_FORMAT_BUFFER_LENGTH 512
@@ -46,14 +47,7 @@ typedef struct irc_message{
 		unsigned int /*unsigned int*/             command_type_number :10;//Value limit: 0 to 1024
 	};
 	union{
-		struct{
-			LinkedList/*<Stringp>*/* channels;
-		}join;
-
-		struct{
-			LinkedList/*<Stringp>*/* channels;
-		}part;
-
+		LinkedList/*<Stringp>*/* channels;
 		struct{
 			Stringp target;
 			Stringp text;
@@ -62,9 +56,11 @@ typedef struct irc_message{
 }irc_message;
 
 /**
- * Id of the connection, got from socket()
+ * IRC Connection structure
  */
-typedef int irc_connection_id;
+typedef struct irc_connection{
+	int id;//Id of the connection, got from socket()
+}irc_connection;
 
 /**
  * Sends a raw message to the irc server
@@ -73,16 +69,17 @@ typedef int irc_connection_id;
  * @param str String to be sent
  * @param len Length of Stringp to be sent
  */
-void irc_send_raw(irc_connection_id id,const char* str,size_t len);
+void irc_send_raw(const irc_connection* connection,const char* str,size_t len);
 
 /**
- * Sends a null terminated raw message to the irc server
+ * Sends a raw message to the irc server using a null terminated string
  *
  * @param id  Id of the connection
  * @param str String to be sent
  */
-void irc_send_rawnt(irc_connection_id id,const char* str);
-
+inline void irc_send_rawnt(const irc_connection* connection,const char* str){
+	irc_send_raw(connection,str,strlen(str));
+}
 /**
  * Sends a formatted raw message to the irc server
  *
@@ -90,7 +87,7 @@ void irc_send_rawnt(irc_connection_id id,const char* str);
  * @param format Equivalent to the printf formatting, see printf documentation
  * @param ...    Data 
  */
-void irc_send_rawf(irc_connection_id id,const char* format,...);
+void irc_send_rawf(const irc_connection* connection,const char* format,...);
 
 /**
  * Connects to a irc server by host and port
@@ -98,7 +95,7 @@ void irc_send_rawf(irc_connection_id id,const char* format,...);
  * @param host Hostname (address/ip) of the irc server
  * @param port Port for the hostname of the irc server
  */
-irc_connection_id irc_connect(const char* host,unsigned short port);
+irc_connection irc_connect(const char* host,unsigned short port);
 
 /**
  * Sets nickname for irc connection
@@ -106,8 +103,8 @@ irc_connection_id irc_connect(const char* host,unsigned short port);
  * @param id   Id of the connection
  * @param name Specified nickname
  */
-inline void irc_set_nickname(irc_connection_id id,const char* name){
-	irc_send_rawf(id,"NICK %s\r\n",name);
+inline void irc_set_nickname(const irc_connection* connection,const char* name){
+	irc_send_rawf(connection,"NICK %s\r\n",name);
 }
 
 /**
@@ -116,8 +113,8 @@ inline void irc_set_nickname(irc_connection_id id,const char* name){
  * @param id   Id of the connection
  * @param name Specified username
  */
-inline void irc_set_username(irc_connection_id id,const char* name){
-	irc_send_rawf(id,"USER %s 0 0 :%s\r\n",name,name);
+inline void irc_set_username(const irc_connection* connection,const char* name){
+	irc_send_rawf(connection,"USER %s 0 0 :%s\r\n",name,name);
 }
 
 /**
@@ -126,12 +123,14 @@ inline void irc_set_username(irc_connection_id id,const char* name){
  * @param id      Id of the connection
  * @param channel Channel name
  */
-inline void irc_join_channel(irc_connection_id id,const char* channel){
-	irc_send_rawf(id,"JOIN %s\r\n",channel);
+inline void irc_join_channel(const irc_connection* connection,const char* channel){
+	irc_send_rawf(connection,"JOIN %s\r\n",channel);
 }
 
-void irc_parse_message(irc_connection_id id,Stringp raw_message,void(*onMessageFunc)(irc_connection_id id,const irc_message* message));
+void irc_parse_message(const irc_connection* connection,Stringp raw_message,void(*onMessageFunc)(const irc_connection* connection,const irc_message* message));
 
-void irc_send_message(irc_connection_id id,Stringp target,Stringp message);
+void irc_send_message(const irc_connection* connection,Stringp target,Stringp message);
+
+bool irc_read(const irc_connection* connection,void(*onMessageFunc)(const irc_connection* connection,const irc_message* message));
 
 #endif

@@ -8,49 +8,52 @@
 #include <lolie/Stringp.h>//Null terminatd Stringp operations
 #include <lolie/Memory.h>//Memory_equals
 #include <lolie/LinkedList.h>
+#include <lolie/ControlStructures.h>
+#include <lolie/Math.h>
 
 #include <unistd.h>//Unix standard library
 #include <netdb.h> //Networking
 
-void irc_send_rawf(irc_connection_id id,const char* format,...){
+void irc_send_rawf(const irc_connection* connection,const char* format,...){
 	static char format_buffer[IRC_FORMAT_BUFFER_LENGTH];
 
 	va_list ap;
 	va_start(ap,format);
 	vsnprintf(format_buffer,IRC_FORMAT_BUFFER_LENGTH,format,ap);
 	va_end(ap);
-	irc_send_rawnt(id,format_buffer);
+	irc_send_rawnt(connection,format_buffer);
 }
 
-irc_connection_id irc_connect(const char* host,unsigned short port){
+irc_connection irc_connect(const char* host,unsigned short port){
 	struct addrinfo hints,
 	               *res;
-	char portStr[6];sprintf(portStr,"%d",port);
+	char portStr[6];portStr[long2str((long)port,STRINGP(portStr,6))]='\0';
+
+	printf("Connecting to `%s:%s`\n",host,portStr);
 
 	memset(&hints,0,sizeof hints);
 	hints.ai_family = AF_INET;
 	hints.ai_socktype = SOCK_STREAM;
 	getaddrinfo(host,portStr,&hints,&res);
-	irc_connection_id id = socket(res->ai_family,res->ai_socktype,res->ai_protocol);
+	const int id = socket(res->ai_family,res->ai_socktype,res->ai_protocol);
 
 	int connection = connect(id,res->ai_addr,res->ai_addrlen);
 	if(connection<0)
 		printf("Error: connect() returned %i\n",connection);
 
-	return id;
+	return (irc_connection){.id=id};
 }
 
-inline void irc_send_raw(irc_connection_id id,const char* str,size_t len){
+void irc_send_raw(const irc_connection* connection,const char* str,size_t len){
+	//stdout verbose output
 	Stringp_put(STRINGP(">> ",3),stdout);
 	Stringp_put(STRINGP(str,len),stdout);
-	write(id,str,len);
+
+	//Write to server
+	write(connection->id,str,len);
 }
 
-inline void irc_send_rawnt(irc_connection_id id,const char* str){
-	irc_send_raw(id,str,strlen(str));
-}
-
-inline void irc_send_message(irc_connection_id id,Stringp target,Stringp message){
+void irc_send_message(const irc_connection* connection,Stringp target,Stringp message){
 	char write_buffer[message.length+target.length+12];
 
 	int len = Stringp_vcopy(STRINGP(write_buffer,IRC_BUFFER_LENGTH),5,
@@ -60,10 +63,10 @@ inline void irc_send_message(irc_connection_id id,Stringp target,Stringp message
 		message,
 		STRINGP("\r\n",2)
 	);
-	irc_send_raw(id,write_buffer,len);
+	irc_send_raw(connection,write_buffer,len);
 }
 
-void irc_parse_message(irc_connection_id id,Stringp raw_message,void(*onMessageFunc)(irc_connection_id id,const irc_message* message)){
+void irc_parse_message(const irc_connection* connection,Stringp raw_message,void(*onMessageFunc)(const irc_connection* connection,const irc_message* message)){
 	//If standard message prefix
 	if(raw_message.ptr[0] == ':'){
 		irc_message message;
@@ -79,7 +82,7 @@ void irc_parse_message(irc_connection_id id,Stringp raw_message,void(*onMessageF
 			if(read_ptr>=read_ptr_end)
 				return;
 			if(read_ptr[0] == '\r' && read_ptr[1] == '\n')
-				return irc_parse_message(id,STRINGP(read_ptr+2,raw_message.length-(read_ptr+2-raw_message.ptr)),onMessageFunc);
+				goto TermNewCommand;
 
 			if(*read_ptr == ' '){//If end of prefix
 				if(message.prefix_type == IRC_MESSAGE_PREFIX_USER){//If already determined it is a user message, then it is a hostname
@@ -112,7 +115,7 @@ void irc_parse_message(irc_connection_id id,Stringp raw_message,void(*onMessageF
 			if(read_ptr>=read_ptr_end)
 				return;
 			if(read_ptr[0] == '\r' && read_ptr[1] == '\n')
-				return irc_parse_message(id,STRINGP(read_ptr+2,raw_message.length-(read_ptr+2-raw_message.ptr)),onMessageFunc);
+				goto TermNewCommand;
 
 			if(*read_ptr == ' '){//If end of command
 				switch(read_ptr-read_ptr_begin){
@@ -127,10 +130,10 @@ void irc_parse_message(irc_connection_id id,Stringp raw_message,void(*onMessageF
 					case 4:
 						if(Memory_equals(read_ptr_begin,"JOIN",4)){
 							message.command_type = IRC_MESSAGE_COMMAND_JOIN;
-							message.command.join.channels=NULL;
+							message.command.channels=NULL;
 						}else if(Memory_equals(read_ptr_begin,"PART",4)){
 							message.command_type = IRC_MESSAGE_COMMAND_PART;
-							message.command.part.channels=NULL;
+							message.command.channels=NULL;
 						}else if(Memory_equals(read_ptr_begin,"NICK",4))
 							message.command_type = IRC_MESSAGE_COMMAND_NICK;
 						else if(Memory_equals(read_ptr_begin,"KICK",4))
@@ -180,7 +183,7 @@ void irc_parse_message(irc_connection_id id,Stringp raw_message,void(*onMessageF
 						case IRC_MESSAGE_COMMAND_JOIN:{
 							Stringp* tmp = malloc(sizeof(Stringp*));
 							*tmp = STRINGP(read_ptr_begin,read_ptr-read_ptr_begin);
-							LinkedList_push(&message.command.part.channels,tmp);
+							LinkedList_push(&message.command.channels,tmp);
 						}	break;
 					}
 					if(*++read_ptr == ':')
@@ -193,16 +196,39 @@ void irc_parse_message(irc_connection_id id,Stringp raw_message,void(*onMessageF
 		}
 
 		if(onMessageFunc!=NULL)
-			onMessageFunc(id,&message);
-		if(repeat)
-			return irc_parse_message(id,STRINGP(read_ptr+2,raw_message.length-(read_ptr+2-raw_message.ptr)),onMessageFunc);
+			onMessageFunc(connection,&message);
+		if(repeat){
+			TermNewCommand:
+			return irc_parse_message(connection,STRINGP(read_ptr+2,raw_message.length-(read_ptr+2-raw_message.ptr)),onMessageFunc);
+		}
 		else
 			return;
-
 	}
 	//Else if it is a ping request 
 	else if(Memory_equals(raw_message.ptr,"PING",4)){
 		raw_message.ptr[1]='O';//Set buffer to PONG instead of PING
-		irc_send_raw(id,raw_message.ptr,raw_message.length);//Send
+		irc_send_raw(connection,raw_message.ptr,raw_message.length);//Send
 	}
 }
+
+bool irc_read(const irc_connection* connection,void(*onMessageFunc)(const irc_connection* connection,const irc_message* message)){
+	static char read_buffer[IRC_BUFFER_LENGTH+1];
+	static int read_len;
+
+	//If a message is sent from the server
+	if((read_len = read(connection->id,read_buffer,IRC_BUFFER_LENGTH))){
+		if(read_len<0){//Error checking
+			fprintf(stderr,"Error: read() returned negative value: %i\n",read_len);
+			return false;
+		}
+
+		//Print the raw message that was received
+		Stringp_put(STRINGP(read_buffer,read_len),stdout);
+
+		irc_parse_message(connection,STRINGP(read_buffer,read_len),onMessageFunc);
+
+		return true;
+	}
+	return false;
+}
+
