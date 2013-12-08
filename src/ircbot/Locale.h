@@ -4,30 +4,30 @@
 #include <lolie/Stringp.h>
 
 struct Locale{
-	Stringp lang_name;
+	Stringcp lang_name;
 
-	Stringp boolean[2];
+	Stringcp boolean[2];
 
 	struct{
-		Stringp set;
-		Stringp unknown;
+		Stringcp set;
+		Stringcp unknown;
 	}language;
 
 	struct{
-		Stringp ask;
-		Stringp yes[10];
-		Stringp maybe[5];
-		Stringp no[5];
-		Stringp failure;
+		Stringcp ask;
+		Stringcp yes[10];
+		Stringcp maybe[5];
+		Stringcp no[5];
+		Stringcp failure;
 	}magic8ball;
 
 	struct{
-		Stringp set;
-		Stringp get;
+		Stringcp set;
+		Stringcp get;
 	}prefix;
 
-	Stringp missing_argument;
-	Stringp unknown_command;
+	Stringcp missing_argument;
+	Stringcp unknown_command;
 };
 
 enum Languages{

@@ -59,7 +59,7 @@ void irc_send_raw(const irc_connection* connection,const char* str,size_t len){
 	write(connection->id,str,len);
 }
 
-void irc_send_message(const irc_connection* connection,Stringp target,Stringp message){
+void irc_send_message(const irc_connection* connection,Stringcp target,Stringcp message){
 	char write_buffer[message.length+target.length+12];
 
 	int len = Stringp_vcopy(STRINGP(write_buffer,IRC_BUFFER_LENGTH),5,
@@ -72,7 +72,7 @@ void irc_send_message(const irc_connection* connection,Stringp target,Stringp me
 	irc_send_raw(connection,write_buffer,len);
 }
 
-void irc_parse_message(const irc_connection* connection,Stringp raw_message,void(*onMessageFunc)(const irc_connection* connection,const irc_message* message)){
+void irc_parse_message(const irc_connection* connection,Stringcp raw_message,void(*onMessageFunc)(const irc_connection* connection,const irc_message* message)){
 	//If standard message prefix
 	if(raw_message.ptr[0] == ':'){
 		irc_message message;
@@ -205,15 +205,14 @@ void irc_parse_message(const irc_connection* connection,Stringp raw_message,void
 			onMessageFunc(connection,&message);
 		if(repeat){
 			TermNewCommand:
-			return irc_parse_message(connection,STRINGP(read_ptr+2,raw_message.length-(read_ptr+2-raw_message.ptr)),onMessageFunc);
+			return irc_parse_message(connection,STRINGCP(read_ptr+2,raw_message.length-(read_ptr+2-raw_message.ptr)),onMessageFunc);
 		}
 		else
 			return;
 	}
 	//Else if it is a ping request 
 	else if(Memory_equals(raw_message.ptr,"PING",4)){
-		raw_message.ptr[1]='O';//Set buffer to PONG instead of PING
-		irc_send_raw(connection,raw_message.ptr,raw_message.length);//Send
+		irc_send_raw(connection,"PONG",4);//Send
 	}
 }
 
@@ -231,7 +230,7 @@ bool irc_read(const irc_connection* connection,void(*onMessageFunc)(const irc_co
 		//Print the raw message that was received
 		Stringp_put(STRINGP(read_buffer,read_len),stdout);
 
-		irc_parse_message(connection,STRINGP(read_buffer,read_len),onMessageFunc);
+		irc_parse_message(connection,STRINGCP(read_buffer,read_len),onMessageFunc);
 
 		return true;
 	}

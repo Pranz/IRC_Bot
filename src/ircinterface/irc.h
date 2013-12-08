@@ -27,7 +27,7 @@ typedef enum irc_message_command_type{
 }irc_message_command_type;
 
 typedef struct irc_message{
-	Stringp raw_message;
+	Stringcp raw_message;
 
 	irc_message_prefix_type prefix_type;
 	union{
@@ -127,9 +127,9 @@ inline void irc_join_channel(const irc_connection* connection,const char* channe
 	irc_send_rawf(connection,"JOIN %s\r\n",channel);
 }
 
-void irc_parse_message(const irc_connection* connection,Stringp raw_message,void(*onMessageFunc)(const irc_connection* connection,const irc_message* message));
+void irc_parse_message(const irc_connection* connection,Stringcp raw_message,void(*onMessageFunc)(const irc_connection* connection,const irc_message* message));
 
-void irc_send_message(const irc_connection* connection,Stringp target,Stringp message);
+void irc_send_message(const irc_connection* connection,Stringcp target,Stringcp message);
 
 bool irc_read(const irc_connection* connection,void(*onMessageFunc)(const irc_connection* connection,const irc_message* message));
 
