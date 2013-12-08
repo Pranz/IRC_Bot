@@ -12,7 +12,7 @@
 #include <lolie/ControlStructures.h>
 #include <lolie/url.c>
 
-#include "irc.h"
+#include <ircinterface/irc.h>
 #include "Locale.h"
 
 //TODO: "&&"" to combine commands and maybe `command` to insert a command with output as return value to an argument

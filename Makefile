@@ -1,44 +1,63 @@
 CC=gcc
-CFLAGS= -Wall -std=gnu99
-LDFLAGS= 
 
-LIBS=lolie ssl crypto
+CFLAGS=-Wall -std=gnu99
+CFLAGS_BIN=
+CFLAGS_LIB=-fPIC
+LDFLAGS=-llolie
+LDFLAGS_BIN=-lssl -lcrypto
+LDFLAGS_LIB=
+
 BINDIR=bin
 OBJDIR=obj
 SRCDIR=src
-OUT=ircbot
+SRCDIR_BIN=ircbot
+SRCDIR_LIB=ircinterface
+
+OUT_BIN=ircbot
+OUT_LIB=ircinterface
 
 vpath %.c $(SRCDIR)
-
 rwildcard=$(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2) $(filter $(subst *,%,$2),$d))
 
-SOURCES=$(call rwildcard,./$(SRCDIR),*.c)
+SOURCES=
 OBJECTS=$(SOURCES:./$(SRCDIR)/%.c=$(OBJDIR)/%.o)
 
-OUTPREFIX=
-OUTPOSTFIX=
-OUTPUTFLAG=
+SOURCES=$(call rwildcard,./$(SRCDIR)/$(SRCDIR_BIN),*.c)
+OBJECTS_BIN:=$(OBJECTS)
 
-ifneq (,$(findstring gcc,$(CC)))
-	OUTPUTFLAG=-o
-	CFLAGS+= -fno-gnu89-inline
-	LDFLAGS+=$(LIBS:%=-l%)
-endif
+SOURCES=$(call rwildcard,./$(SRCDIR)/$(SRCDIR_LIB),*.c)
+OBJECTS_LIB:=$(OBJECTS)
+
+OUTPREFIX_BIN=
+OUTPOSTFIX_BIN=
+OUTPREFIX_LIB=lib
+OUTPOSTFIX_LIB=.so
+
+LDFLAGS_LIB+=-shared -Wl,-soname,$(OUTPREFIX_LIB)$(OUT_LIB)$(OUTPOSTFIX_LIB)
+LDFLAGS_BIN+=-lircinterface -L$(BINDIR)
 
 all: CFLAGS+= -O3
-all: $(OUT)
+all: $(OUT_LIB)
+all: $(OUT_BIN)
 
 debug: CFLAGS+= -g -ftrapv -Wundef -Wpointer-arith -Wcast-align -Wwrite-strings -Wcast-qual -Wswitch-default -Wunreachable-code -Wfloat-equal -Wuninitialized -Wignored-qualifiers
-debug: $(OUT)
+debug: $(OUT_BIN)
+debug: $(OUT_LIB)
 
-$(OBJDIR)/%.o: %.c
-	$(CC) -I$(SRCDIR) $(CFLAGS) $(OUTPUTFLAG) $@ -c $<
+$(OBJDIR)/$(SRCDIR_BIN)/%.o: $(SRCDIR_BIN)/%.c
+	$(CC) -I$(SRCDIR)/ -I$(SRCDIR)/$(SRCDIR_BIN) $(CFLAGS) $(CFLAGS_BIN) -o $@ -c $<
+
+$(OBJDIR)/$(SRCDIR_LIB)/%.o: $(SRCDIR_LIB)/%.c
+	$(CC) -I$(SRCDIR)/$(SRCDIR_LIB) $(CFLAGS) $(CFLAGS_LIB) -o $@ -c $<
 
 clean:
-	rm -f $(OBJECTS) $(BINDIR)/$(OUTPREFIX)$(OUT)$(OUTPOSTFIX)
+	rm -f $(OBJECTS_BIN) $(OBJECTS_LIB) $(BINDIR)/$(OUTPREFIX_BIN)$(OUT_BIN)$(OUTPOSTFIX_BIN) $(BINDIR)/$(OUTPREFIX_LIB)$(OUT_LIB)$(OUTPOSTFIX_LIB)
 
-$(OUT): $(OBJECTS)
-	$(CC) $(OUTPUTFLAG) $(BINDIR)/$(OUTPREFIX)$@$(OUTPOSTFIX) $(LDFLAGS) $^
+$(OUT_BIN): $(OBJECTS_BIN)
+	$(CC) -o $(BINDIR)/$(OUTPREFIX_BIN)$@$(OUTPOSTFIX_BIN) $(LDFLAGS) $(LDFLAGS_BIN) $^
+
+$(OUT_LIB): $(OBJECTS_LIB)
+	$(CC) -o $(BINDIR)/$(OUTPREFIX_LIB)$@$(OUTPOSTFIX_LIB) $(LDFLAGS) $(LDFLAGS_LIB) $^
 
 run:
-	./$(BINDIR)/$(OUTPREFIX)$(OUT)$(OUTPOSTFIX)
+	cd $(BINDIR) && ./$(OUTPREFIX_BIN)$(OUT_BIN)$(OUTPOSTFIX_BIN)
