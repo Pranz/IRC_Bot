@@ -68,29 +68,6 @@ Stringp string_splitted_delim(Stringp str,Stringp delimiter,bool(*onSplitFunc)(c
 
 Stringp Stringp_find_substr(Stringp str,bool(*findFunc)(Stringp str));
 
-struct CommandArgument{
-	Stringp name;
-	enum{
-		COMMAND_ARGUMENT_TYPE_INTEGER,
-		COMMAND_ARGUMENT_TYPE_STRING,
-		COMMAND_ARGUMENT_TYPE_FLOATINGPOINT,
-		COMMAND_ARGUMENT_TYPE_CHARACTER,
-	}type;
-
-	enum{
-		COMMAND_ARGUMENT_REQUIRED,
-		COMMAND_ARGUMENT_OPTIONAL,
-		COMMAND_ARGUMENT_VARARG
-	}requirement;
-};
-
-struct Command{
-	Stringp name;
-	Stringp help;
-	Stringp delimiter;
-	struct CommandArgument args[];
-};
-
 void onCommand(const irc_connection* connection,Stringcp command,Stringcp target,const char* arg_begin,const char* arg_end,const irc_message* message){
 	const char* read_ptr = arg_begin;
 
@@ -500,7 +477,7 @@ int main(){
 	command_prefix.ptr[0]='!';
 
 	//Connect to server
-	irc_connection connection=irc_connect("server",1568);
+	irc_connection connection=irc_connect("flygande-toalett.tk",1568);
 	if(connection.id<0){//Error checking
 		fprintf(stderr,"Error: IRC connection id is a negative value: %i\n",connection.id);
 		return EXIT_FAILURE;
