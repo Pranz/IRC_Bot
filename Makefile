@@ -40,7 +40,7 @@ all: CFLAGS+= -O3
 all: $(OUT_LIB)
 all: $(OUT_BIN)
 
-debug: CFLAGS+= -g -fgnu89-inline -ftrapv -Wundef -Wpointer-arith -Wcast-align -Wwrite-strings -Wcast-qual -Wswitch-default -Wunreachable-code -Wfloat-equal -Wuninitialized -Wignored-qualifiers
+debug: CFLAGS+= -g -fgnu89-inline -ftrapv -Wundef -Wpointer-arith -Wcast-align -Wwrite-strings -Wcast-qual -Wswitch-default -Wunreachable-code -Wfloat-equal -Wuninitialized -Wignored-qualifiers -Wsuggest-attribute=pure -Wsuggest-attribute=const
 debug: $(OUT_LIB)
 debug: $(OUT_BIN)
 

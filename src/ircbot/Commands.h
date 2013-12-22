@@ -6,9 +6,8 @@
 #include "Commands.h"
 
 bool initCommands();
-bool freeCommands();
-bool registerCommand(struct Command* command);
-bool unregisterCommand(Stringp name);
-struct Command* getCommand(Stringp name);
+void freeCommands();
+bool registerCommands(unsigned short count,...);
+const struct Command* getCommand(Stringp name);
 
 #endif

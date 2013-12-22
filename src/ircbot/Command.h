@@ -14,7 +14,7 @@ enum CommandArgumentRequirement{
 	COMMAND_ARGUMENT_REQUIRED,
 	COMMAND_ARGUMENT_OPTIONAL,
 	COMMAND_ARGUMENT_VARARG
-}
+};
 
 struct CommandArgument{
 	Stringp name;
