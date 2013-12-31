@@ -3,6 +3,8 @@
 
 #include <lolie/Stringp.h>
 
+typedef struct irc_connection irc_connection;
+
 enum CommandArgumentType{
 	COMMAND_ARGUMENT_TYPE_INTEGER,
 	COMMAND_ARGUMENT_TYPE_STRING,
@@ -23,9 +25,10 @@ struct CommandArgument{
 };
 
 struct Command{
-	Stringp name;
-	Stringp help;
-	Stringp delimiter;
+	Stringcp name;
+	Stringcp help;
+	bool(*func)(const irc_connection* connection,const char* arg_begin,const char* arg_end);
+	unsigned int argCount;
 	struct CommandArgument args[];
 };
 

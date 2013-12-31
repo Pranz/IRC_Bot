@@ -113,8 +113,8 @@ inline void irc_set_nickname(const irc_connection* connection,const char* name){
  * @param id   Id of the connection
  * @param name Specified username
  */
-inline void irc_set_username(const irc_connection* connection,const char* name){
-	irc_send_rawf(connection,"USER %s 0 0 :%s\r\n",name,name);
+inline void irc_set_username(const irc_connection* connection,const char* username,const char* realname){
+	irc_send_rawf(connection,"USER %s 0 0 :%s\r\n",username,realname?:username);
 }
 
 /**

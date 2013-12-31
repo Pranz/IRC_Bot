@@ -212,7 +212,10 @@ void irc_parse_message(const irc_connection* connection,Stringcp raw_message,voi
 	}
 	//Else if it is a ping request 
 	else if(Memory_equals(raw_message.ptr,"PING",4)){
-		irc_send_raw(connection,"PONG",4);//Send
+		char tmp[raw_message.length];
+		memcpy(tmp,raw_message.ptr,raw_message.length);
+		tmp[1]='O';
+		irc_send_raw(connection,tmp,raw_message.length);//Send
 	}
 }
 
