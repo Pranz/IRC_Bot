@@ -7,7 +7,7 @@
 
 static struct Command* c=NULL;
 
-bool initCustomCommands(){
+bool initCustomCommands(struct DynamicArray* commands){
 	c=malloc(sizeof(struct Command)*4);
 	if(!c){
 		fputs("Error: Cannot allocate memory for commands",stderr);
@@ -50,10 +50,10 @@ bool initCustomCommands(){
 		}),
 		0
 	};
-	return registerCommandsFromArray(c,4);
+	return registerCommandsFromArray(commands,c,4);
 }
 
-bool freeCustomCommands(){
+bool freeCustomCommands(struct DynamicArray* commands){
 	if(c){
 		free(c);
 		c=NULL;

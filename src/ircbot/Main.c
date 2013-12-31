@@ -10,7 +10,8 @@
 #include <lolie/Memory.h>
 #include <lolie/Math.h>
 #include <lolie/ControlStructures.h>
-#include <lolie/url.c>
+#include <lolie/url.h>
+#include <lolie/DynamicArray.h>
 
 #include <ircinterface/irc.h>
 #include "Locale.h"
@@ -30,6 +31,7 @@
 char write_buffer[IRC_WRITE_BUFFER_LEN];
 
 struct IRCBot bot;
+struct DynamicArray/*<LinkedList<struct Command*>*>*/ commands;
 
 char command_separator = ' ';
 enum Languages language = LANG_SWEDISH;
@@ -73,7 +75,7 @@ Stringp Stringp_find_substr(Stringp str,bool(*findFunc)(Stringp str));
 
 void onCommand(const irc_connection* connection,Stringcp command,Stringcp target,const char* arg_begin,const char* arg_end,const irc_message* message){
 	const struct Command* currentCommand;
-	if((currentCommand=getCommand(command)) && currentCommand->func(connection,arg_begin,arg_end))
+	if((currentCommand=getCommand(&commands,command)) && currentCommand->func(connection,arg_begin,arg_end))
 		return;
 	else{
 		int len = Stringp_vcopy(STRINGP(write_buffer,IRC_WRITE_BUFFER_LEN),4,
@@ -134,16 +136,16 @@ int main(){
 	IRCBot_setUsername(&bot,Stringcp_from_cstr("Toabot"));
 	IRCBot_setCommandPrefixc(&bot,'!');
 
-	initCommands();
-	if(!initCustomCommands())
+	initCommands(&commands);
+	if(!initCustomCommands(&commands))
 		fputs("Warning: Failed to initialize custom commands",stderr);
 
 	//While a message is sent from the server
 	while(irc_read(&bot.connection,&onMessageFunc));
 
-	if(!freeCustomCommands())
+	if(!freeCustomCommands(&commands))
 		fputs("Warning: Failed to free custom commands",stderr);
-	freeCommands();
+	freeCommands(&commands);
 	
 	//Disconnect connection
 	IRCBot_disconnect(&bot);

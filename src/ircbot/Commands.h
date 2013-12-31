@@ -4,11 +4,12 @@
 #include <lolie/TypeAliases.h>
 #include <lolie/Stringp.h>
 struct Command;
+struct DynamicArray;
 
-bool initCommands();
-void freeCommands();
-bool registerCommand(const struct Command* command);
-bool registerCommandsFromArray(const struct Command* cmds,size_t count);
-const struct Command* getCommand(Stringcp name);
+bool initCommands(struct DynamicArray* commands);
+void freeCommands(struct DynamicArray* commands);
+bool registerCommand(struct DynamicArray* commands,const struct Command* command);
+bool registerCommandsFromArray(struct DynamicArray* commands,const struct Command* cmds,size_t count);
+const struct Command* getCommand(struct DynamicArray* commands,Stringcp name);
 
 #endif
