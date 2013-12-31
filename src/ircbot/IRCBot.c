@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "ircinterface/irc.h"
+#include "Commands.h"
 #include <lolie/Stringp.h>
 
 /**
@@ -54,6 +55,7 @@ bool IRCBot_initialize(struct IRCBot* bot){
 	bot->error=IRCBot_Error_init;
 	
 	bot->commandPrefix=Stringp_init;
+	initCommands(&bot->commands);
 
 	return true;
 }
@@ -72,6 +74,7 @@ bool IRCBot_free(struct IRCBot* bot){
 	Stringp_free_malloc(&bot->realname);
 	Stringp_free_malloc(&bot->error.message);
 	Stringp_free_malloc(&bot->commandPrefix);
+	freeCommands(&bot->commands);
 
 	//Free the mallocated structure
 	free(bot);

@@ -3,6 +3,7 @@
 
 #include <lolie/TypeAliases.h>
 #include <lolie/Stringp.h>
+#include <lolie/DynamicArray.h>
 #include "ircinterface/irc.h"
 #include "IRCBot_Error.h"
 
@@ -18,6 +19,7 @@ struct IRCBot{
 	struct IRCBot_Error error;
 
 	Stringp commandPrefix;
+	struct DynamicArray/*<LinkedList<struct Command*>*>*/ commands;
 };
 
 bool IRCBot_initialize(struct IRCBot* bot);
