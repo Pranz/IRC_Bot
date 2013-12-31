@@ -1,16 +1,11 @@
 #include <stdio.h> //Input/output
 #include <string.h>
-#include <time.h>
-
-#include <openssl/md4.h>
-#include <openssl/md5.h>
 
 #include <lolie/Stringp.h>
 #include <lolie/LinkedList.h>
 #include <lolie/Memory.h>
 #include <lolie/Math.h>
 #include <lolie/ControlStructures.h>
-#include <lolie/url.h>
 
 #include <ircinterface/irc.h>
 #include "Locale.h"
