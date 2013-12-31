@@ -5,6 +5,11 @@
 #include <lolie/TypeAliases.h>
 #include <lolie/Stringp.h>
 
+/**
+ * The list of loaded plugins
+ *
+ * Type: LinkedList<struct Plugin*>*
+ */
 LinkedList*/*<struct Plugin*>*/ plugins=LinkedList_init;
 
 struct Plugin{
@@ -15,7 +20,19 @@ struct Plugin{
 	}functions;
 };
 
+/**
+ * Loads a plugin library by filename
+ *
+ * @param filename Filename of the dynamic library that contains the plugin
+ * @return         NULL if error, the plugin structure if successful
+ */
 struct Plugin* Plugin_load(const char* filename);
+
+/**
+ * Unloads a plugin, freeing all the resources allocated
+ *
+ * @param plugin  The plugin structure to be unloaded
+ */
 bool Plugin_unload(struct Plugin* plugin);
 
 #endif
