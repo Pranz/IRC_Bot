@@ -62,18 +62,18 @@ struct Plugin* Plugin_load(struct IRCBot* bot,const char* filename){
 		goto Error;
 	}
 
-	//Load the required functions from plugin
-	if(!(plugin->functions.version = dlsym(plugin->lib,"plugin_version"))){
+	//Load the required fields from the plugin
+	if(!(plugin->constants.version = dlsym(plugin->lib,"plugin_version"))){
 		fprintf(stderr,"Modules: Error: %s\n",dlerror());
 		goto Error;
 	}
 
-	if(!(plugin->functions.author = dlsym(plugin->lib,"plugin_author"))){
+	if(!(plugin->constants.author = dlsym(plugin->lib,"plugin_author"))){
 		fprintf(stderr,"Modules: Error: %s\n",dlerror());
 		goto Error;
 	}
 
-	//Load the optional functions from the plugin
+	//Load the optional fields from the plugin
 	plugin->functions.onLoad   = dlsym(plugin->lib,"plugin_onLoad");
 	plugin->functions.onUnload = dlsym(plugin->lib,"plugin_onUnload");
 
@@ -82,7 +82,7 @@ struct Plugin* Plugin_load(struct IRCBot* bot,const char* filename){
 
 	//Call onLoad function from plugin if any
 	if(plugin->functions.onLoad)
-		if(!plugin->functions.onLoad()){
+		if(!plugin->functions.onLoad(bot)){
 			fputs("Modules: Error: onLoad function failed\n",stderr);
 			goto Error;
 		}
@@ -96,6 +96,9 @@ struct Plugin* Plugin_load(struct IRCBot* bot,const char* filename){
 }
 
 bool Plugin_unload(struct IRCBot* bot,struct Plugin* plugin){
+	if(!plugin->functions.onUnload(bot))
+		fputs("Modules: Warning: onUnload function failed\n",stderr);
+
 	//Remove from plugin list
 	LinkedList_remove(&bot->plugins,plugin);
 

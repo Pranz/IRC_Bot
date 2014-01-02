@@ -9,11 +9,13 @@ struct IRCBot;
 struct Plugin{
 	void* lib;
 	struct{
-		const char* version;
-		const char* author;
 		bool(*onLoad)(struct IRCBot* bot);
 		bool(*onUnload)(struct IRCBot* bot);
 	}functions;
+	struct{
+		const char* version;
+		const char* author;
+	}constants;
 };
 
 /**
