@@ -13,6 +13,7 @@
 #include "Command.h"
 #include "CustomCommands.h"
 #include "IRCBot.h"
+#include "Plugin.h"
 
 //TODO: "&&"" to combine commands and maybe `command` to insert a command with output as return value to an argument
 //TODO: Help pages for a list of commands and syntax, explanation, etc.
@@ -120,7 +121,12 @@ void onMessageFunc(const irc_connection* connection,const irc_message* message){
 }
 
 int main(){
+	fputs(IRCBOT_SIGNATURE "\nCopyright (C) 2014, Lolirofle\n\n",stdout);
+
 	IRCBot_initialize(&bot);
+
+	if(!Plugin_loadAll("modules"))
+		fputs("Warning: Failed to initialize modules\n",stderr);
 
 	//Connect to server
 	IRCBot_connect(&bot,Stringcp_from_cstr("flygande-toalett.tk"),1568);
@@ -130,13 +136,13 @@ int main(){
 	IRCBot_setCommandPrefixc(&bot,'!');
 
 	if(!initCustomCommands(&bot.commands))
-		fputs("Warning: Failed to initialize custom commands",stderr);
+		fputs("Warning: Failed to initialize custom commands\n",stderr);
 
 	//While a message is sent from the server
 	while(irc_read(&bot.connection,&onMessageFunc));
 
 	if(!freeCustomCommands(&bot.commands))
-		fputs("Warning: Failed to free custom commands",stderr);
+		fputs("Warning: Failed to free custom commands\n",stderr);
 	
 	//Disconnect connection
 	IRCBot_disconnect(&bot);

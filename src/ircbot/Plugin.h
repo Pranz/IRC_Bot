@@ -10,7 +10,7 @@
  *
  * Type: LinkedList<struct Plugin*>*
  */
-LinkedList*/*<struct Plugin*>*/ plugins=LinkedList_init;
+extern LinkedList* plugins;
 
 struct Plugin{
 	void* lib;
@@ -34,5 +34,13 @@ struct Plugin* Plugin_load(const char* filename);
  * @param plugin  The plugin structure to be unloaded
  */
 bool Plugin_unload(struct Plugin* plugin);
+
+/**
+ * Loads plugin libraries from a directory
+ *
+ * @param directoryPath Path of the directory where the plugins reside
+ * @return              True if successful, false if error
+ */
+bool Plugin_loadAll(const char* directoryPath);
 
 #endif
