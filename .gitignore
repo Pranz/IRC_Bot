@@ -22,10 +22,6 @@
 # Merge files
 *.orig
 
-bin/*
-lib/*
-gen/*
-obj/*
 old/*
 other/*
 target/*

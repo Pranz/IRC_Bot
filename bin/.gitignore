@@ -1,0 +1,6 @@
+# Ignore all files
+*
+
+# Don't ignore this file
+!.gitignore
+!modules
