@@ -6,6 +6,8 @@
 #include "Commands.h"
 #include <lolie/Stringp.h>
 
+const Stringp IRCBot_signature={IRCBOT_NAME " v" IRCBOT_VERSION,sizeof(IRCBOT_NAME " v" IRCBOT_VERSION)-1};
+
 /**
  * Allocates a string wrapped in a Stringp, copying the string from `src` and null-terminates it.
  * The length of the new Stringp will not include the null-termination character.
@@ -56,6 +58,8 @@ bool IRCBot_initialize(struct IRCBot* bot){
 	
 	bot->commandPrefix=Stringp_init;
 	initCommands(&bot->commands);
+
+	bot->plugins=LinkedList_init;
 
 	return true;
 }

@@ -4,10 +4,14 @@
 #include <lolie/TypeAliases.h>
 #include <lolie/Stringp.h>
 #include <lolie/DynamicArray.h>
+#include <lolie/LinkedList.h>
 #include "ircinterface/irc.h"
 #include "IRCBot_Error.h"
+#include "Plugin.h"
 
-#define IRCBOT_SIGNATURE "Flygande Toalett Toabot v1.0.5-20131229"
+#define IRCBOT_NAME    "Flygande Toalett Toabot"
+#define IRCBOT_VERSION "1.0.5-20131229"
+extern const Stringp IRCBot_signature;
 
 struct IRCBot{
 	struct irc_connection connection;
@@ -20,6 +24,8 @@ struct IRCBot{
 
 	Stringp commandPrefix;
 	struct DynamicArray/*<LinkedList<struct Command*>*>*/ commands;
+
+	LinkedList/*<struct Plugin*>*/* plugins;
 };
 
 bool IRCBot_initialize(struct IRCBot* bot);

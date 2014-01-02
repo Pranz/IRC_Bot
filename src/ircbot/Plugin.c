@@ -5,10 +5,9 @@
 #include <dirent.h>
 #include <string.h>
 #include <stdio.h>
+#include "IRCBot.h"
 
-LinkedList* plugins=LinkedList_init;
-
-bool Plugin_loadAll(const char* directoryPath){
+bool Plugin_loadAll(struct IRCBot* bot,const char* directoryPath){
 	DIR* directory;
 	struct dirent* dir;
 
@@ -42,8 +41,7 @@ bool Plugin_loadAll(const char* directoryPath){
 		strcpy(filename,dir->d_name);
 
 		//Load plugin by file path
-		Plugin_load(filePath);
-		printf("Modules: Loaded `%s`\n",filename);
+		Plugin_load(bot,filePath);
 	}
 
 	//Free resources
@@ -52,25 +50,42 @@ bool Plugin_loadAll(const char* directoryPath){
 	return true;
 }
 
-struct Plugin* Plugin_load(const char* filename){
+struct Plugin* Plugin_load(struct IRCBot* bot,const char* filename){
+	printf("Modules: Loading `%s`\n",filename);
+	
 	//Allocate memory to structure
 	struct Plugin* plugin = malloc(sizeof(struct Plugin));
 
 	//Open file, initialising plugin
 	if(!(plugin->lib = dlopen(filename,RTLD_LAZY))){
-		fprintf(stderr,"%s\n",dlerror());
+		fprintf(stderr,"Modules: Error: %s\n",dlerror());
 		goto Error;
 	}
 
-	//Load the required functions of plugin
-	plugin->functions.print = dlsym(plugin->lib,"print");
-	if((plugin->error = dlerror())!=NULL){
-		fprintf(stderr,"%s\n",plugin->error);
+	//Load the required functions from plugin
+	if(!(plugin->functions.version = dlsym(plugin->lib,"plugin_version"))){
+		fprintf(stderr,"Modules: Error: %s\n",dlerror());
 		goto Error;
 	}
+
+	if(!(plugin->functions.author = dlsym(plugin->lib,"plugin_author"))){
+		fprintf(stderr,"Modules: Error: %s\n",dlerror());
+		goto Error;
+	}
+
+	//Load the optional functions from the plugin
+	plugin->functions.onLoad   = dlsym(plugin->lib,"plugin_onLoad");
+	plugin->functions.onUnload = dlsym(plugin->lib,"plugin_onUnload");
 
 	//Push the plugin into the plugin list
-	LinkedList_push(&plugins,plugin);
+	LinkedList_push(&bot->plugins,plugin);
+
+	//Call onLoad function from plugin if any
+	if(plugin->functions.onLoad)
+		if(!plugin->functions.onLoad()){
+			fputs("Modules: Error: onLoad function failed\n",stderr);
+			goto Error;
+		}
 
 	return plugin;
 
@@ -80,9 +95,9 @@ struct Plugin* Plugin_load(const char* filename){
 	return NULL;
 }
 
-bool Plugin_unload(struct Plugin* plugin){
+bool Plugin_unload(struct IRCBot* bot,struct Plugin* plugin){
 	//Remove from plugin list
-	LinkedList_remove(&plugins,plugin);
+	LinkedList_remove(&bot->plugins,plugin);
 
 	//Close dynamic library
 	dlclose(plugin->lib);

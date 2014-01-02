@@ -121,11 +121,23 @@ void onMessageFunc(const irc_connection* connection,const irc_message* message){
 }
 
 int main(){
-	fputs(IRCBOT_SIGNATURE "\nCopyright (C) 2014, Lolirofle\n\n",stdout);
+	//Top border
+	for(size_t i=IRCBot_signature.length;i>0;--i)
+		putchar('=');
+	putchar('\n');
+
+	//Text
+	printf("%s\nCopyright (C) 2014, Lolirofle\n",IRCBot_signature.ptr);
+
+	//Bottom border
+	for(size_t i=IRCBot_signature.length;i>0;--i)
+		putchar('=');
+	putchar('\n');
+	putchar('\n');
 
 	IRCBot_initialize(&bot);
 
-	if(!Plugin_loadAll("modules"))
+	if(!Plugin_loadAll(&bot,"modules"))
 		fputs("Warning: Failed to initialize modules\n",stderr);
 
 	//Connect to server

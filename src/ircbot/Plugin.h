@@ -4,19 +4,15 @@
 #include <lolie/LinkedList.h>
 #include <lolie/TypeAliases.h>
 #include <lolie/Stringp.h>
-
-/**
- * The list of loaded plugins
- *
- * Type: LinkedList<struct Plugin*>*
- */
-extern LinkedList* plugins;
+struct IRCBot;
 
 struct Plugin{
 	void* lib;
-	char* error;
 	struct{
-		void(*print)();
+		const char* version;
+		const char* author;
+		bool(*onLoad)(struct IRCBot* bot);
+		bool(*onUnload)(struct IRCBot* bot);
 	}functions;
 };
 
@@ -26,14 +22,14 @@ struct Plugin{
  * @param filename Filename of the dynamic library that contains the plugin
  * @return         NULL if error, the plugin structure if successful
  */
-struct Plugin* Plugin_load(const char* filename);
+struct Plugin* Plugin_load(struct IRCBot* bot,const char* filename);
 
 /**
  * Unloads a plugin, freeing all the resources allocated
  *
  * @param plugin  The plugin structure to be unloaded
  */
-bool Plugin_unload(struct Plugin* plugin);
+bool Plugin_unload(struct IRCBot* bot,struct Plugin* plugin);
 
 /**
  * Loads plugin libraries from a directory
@@ -41,6 +37,6 @@ bool Plugin_unload(struct Plugin* plugin);
  * @param directoryPath Path of the directory where the plugins reside
  * @return              True if successful, false if error
  */
-bool Plugin_loadAll(const char* directoryPath);
+bool Plugin_loadAll(struct IRCBot* bot,const char* directoryPath);
 
 #endif
