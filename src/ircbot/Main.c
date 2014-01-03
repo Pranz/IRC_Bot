@@ -66,9 +66,9 @@ Stringp string_splitted_delim(Stringp str,Stringp delimiter,bool(*onSplitFunc)(c
 
 Stringp Stringp_find_substr(Stringp str,bool(*findFunc)(Stringp str));
 
-void onCommand(const irc_connection* connection,Stringcp command,Stringcp target,const char* arg_begin,const char* arg_end,const irc_message* message){
+void onCommand(struct IRCBot* bot,Stringcp command,Stringcp target,const char* arg_begin,const char* arg_end,const irc_message* message){
 	const struct Command* currentCommand;
-	if((currentCommand=getCommand(&bot.commands,command)) && currentCommand->func(connection,target,arg_begin,arg_end))
+	if((currentCommand=getCommand(&bot->commands,command)) && currentCommand->func(bot,target,arg_begin,arg_end))
 		return;
 	else{
 		int len = Stringp_vcopy(STRINGP(write_buffer,IRC_WRITE_BUFFER_LEN),4,
@@ -77,7 +77,7 @@ void onCommand(const irc_connection* connection,Stringcp command,Stringcp target
 			command,
 			STRINGP("\"",1)
 		);
-		irc_send_message(connection,target,STRINGCP(write_buffer,len));
+		irc_send_message(&bot->connection,target,STRINGCP(write_buffer,len));
 	}
 }
 
@@ -101,7 +101,7 @@ void onMessageFunc(const irc_connection* connection,const irc_message* message){
 				read_ptr_begin=++read_ptr;
 
 				//Commands
-				onCommand(connection,command,target,MIN(read_ptr_begin,read_ptr_end),read_ptr_end,message);
+				onCommand(&bot,command,target,MIN(read_ptr_begin,read_ptr_end),read_ptr_end,message);
 			}
 
 			//If private message command
