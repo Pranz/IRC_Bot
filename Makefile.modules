@@ -1,0 +1,24 @@
+CC=gcc
+
+CFLAGS=-Wall -std=gnu99 -Isrc -fPIC
+LDFLAGS=-llolie -lircinterface -Lbin
+
+BINDIR=bin/modules
+SRCDIR=src/modules
+
+vpath %.c $(SRCDIR)
+rwildcard=$(foreach d,$(wildcard $1*),$(call rwildcard,$d/,$2) $(filter $(subst *,%,$2),$d))
+
+SOURCES=$(call rwildcard,$(SRCDIR),*.c)
+OUTPUTS=$(SOURCES:$(SRCDIR)/%.c=%$(OUTPOSTFIX))
+
+OUTPREFIX=
+OUTPOSTFIX=.so
+
+LDFLAGS+= -shared
+
+all: CFLAGS+= -O3
+all: $(OUTPUTS)
+
+%$(OUTPOSTFIX): $(SRCDIR)/%.c
+	$(CC) -o $(BINDIR)/$(OUTPREFIX_BIN)$@$(OUTPOSTFIX_BIN) -Wl,-soname,$(OUTPREFIX_LIB)$@$(OUTPOSTFIX_LIB) $(LDFLAGS) $(CFLAGS) -I$(SRCDIR) $^

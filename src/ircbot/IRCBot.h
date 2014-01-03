@@ -10,8 +10,8 @@
 #include "Plugin.h"
 
 #define IRCBOT_NAME    "Flygande Toalett Toabot"
-#define IRCBOT_VERSION "1.0.6-20140102"
-extern const Stringp IRCBot_signature;
+#define IRCBOT_VERSION "1.0.7-20140103"
+extern const Stringcp IRCBot_signature;
 
 struct IRCBot{
 	struct irc_connection connection;

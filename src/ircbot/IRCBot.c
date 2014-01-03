@@ -6,7 +6,7 @@
 #include "Commands.h"
 #include <lolie/Stringp.h>
 
-const Stringp IRCBot_signature={IRCBOT_NAME " v" IRCBOT_VERSION,sizeof(IRCBOT_NAME " v" IRCBOT_VERSION)-1};
+const Stringcp IRCBot_signature={IRCBOT_NAME " v" IRCBOT_VERSION,sizeof(IRCBOT_NAME " v" IRCBOT_VERSION)-1};
 
 /**
  * Allocates a string wrapped in a Stringp, copying the string from `src` and null-terminates it.

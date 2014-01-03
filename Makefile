@@ -4,7 +4,7 @@ CFLAGS=-Wall -std=gnu99
 CFLAGS_BIN=
 CFLAGS_LIB=-fPIC
 LDFLAGS=-llolie
-LDFLAGS_BIN=-ldl
+LDFLAGS_BIN=-ldl -Wl,-export-dynamic
 LDFLAGS_LIB=
 
 BINDIR=bin

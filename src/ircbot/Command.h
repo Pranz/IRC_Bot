@@ -27,7 +27,7 @@ struct CommandArgument{
 struct Command{
 	Stringcp name;
 	Stringcp help;
-	bool(*func)(const irc_connection* connection,const char* arg_begin,const char* arg_end);
+	bool(*func)(const irc_connection* connection,Stringcp target,const char* arg_begin,const char* arg_end);
 	unsigned int argCount;
 	struct CommandArgument args[];
 };

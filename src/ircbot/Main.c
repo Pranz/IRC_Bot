@@ -11,7 +11,6 @@
 #include "Locale.h"
 #include "Commands.h"
 #include "Command.h"
-#include "CustomCommands.h"
 #include "IRCBot.h"
 #include "Plugin.h"
 
@@ -69,7 +68,7 @@ Stringp Stringp_find_substr(Stringp str,bool(*findFunc)(Stringp str));
 
 void onCommand(const irc_connection* connection,Stringcp command,Stringcp target,const char* arg_begin,const char* arg_end,const irc_message* message){
 	const struct Command* currentCommand;
-	if((currentCommand=getCommand(&bot.commands,command)) && currentCommand->func(connection,arg_begin,arg_end))
+	if((currentCommand=getCommand(&bot.commands,command)) && currentCommand->func(connection,target,arg_begin,arg_end))
 		return;
 	else{
 		int len = Stringp_vcopy(STRINGP(write_buffer,IRC_WRITE_BUFFER_LEN),4,
@@ -135,8 +134,10 @@ int main(){
 	putchar('\n');
 	putchar('\n');
 
+	//Initialize bot structure
 	IRCBot_initialize(&bot);
 
+	//Load all plugins
 	if(!Plugin_loadAll(&bot,"modules"))
 		fputs("Warning: Failed to initialize modules\n",stderr);
 
@@ -147,14 +148,8 @@ int main(){
 	IRCBot_setUsername(&bot,Stringcp_from_cstr("Toabot"));
 	IRCBot_setCommandPrefixc(&bot,'!');
 
-	if(!initCustomCommands(&bot.commands))
-		fputs("Warning: Failed to initialize custom commands\n",stderr);
-
 	//While a message is sent from the server
 	while(irc_read(&bot.connection,&onMessageFunc));
-
-	if(!freeCustomCommands(&bot.commands))
-		fputs("Warning: Failed to free custom commands\n",stderr);
 	
 	//Disconnect connection
 	IRCBot_disconnect(&bot);
