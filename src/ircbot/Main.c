@@ -68,7 +68,11 @@ Stringp Stringp_find_substr(Stringp str,bool(*findFunc)(Stringp str));
 
 void onCommand(struct IRCBot* bot,Stringcp command,Stringcp target,const char* arg_begin,const char* arg_end,const irc_message* message){
 	const struct Command* currentCommand;
-	if((currentCommand=getCommand(&bot->commands,command)) && currentCommand->func(bot,target,arg_begin,arg_end))
+	union CommandArgument arg;
+	arg.free.arg_begin=arg_begin;
+	arg.free.arg_end=arg_end;
+
+	if((currentCommand=getCommand(&bot->commands,command)) && currentCommand->func(bot,target,&arg))
 		return;
 	else{
 		int len = Stringp_vcopy(STRINGP(write_buffer,IRC_WRITE_BUFFER_LEN),4,
@@ -86,7 +90,7 @@ void onMessageFunc(const irc_connection* connection,const irc_message* message){
 		case IRC_MESSAGE_COMMAND_NUMBER:
 			if(message->command_type_number == 1){
 				irc_join_channel(connection,"#bot");
-				irc_join_channel(connection,"#toa");
+				//irc_join_channel(connection,"#toa");
 			}
 			break;
 		case IRC_MESSAGE_COMMAND_PRIVMSG:{
@@ -134,28 +138,35 @@ int main(){
 	putchar('\n');
 	putchar('\n');
 
-	//Initialize bot structure
-	IRCBot_initialize(&bot);
+	int botExit;
+	Bot:{
+		//Initialize bot structure
+		IRCBot_initialize(&bot);
 
-	//Load all plugins
-	if(!Plugin_loadAll(&bot,"modules"))
-		fputs("Warning: Failed to initialize modules\n",stderr);
+		//Load all plugins
+		if(!Plugin_loadAll(&bot,"modules"))
+			fputs("Warning: Failed to initialize modules\n",stderr);
 
-	//Connect to server
-	IRCBot_connect(&bot,Stringcp_from_cstr("flygande-toalett.tk"),1568);
+		//Connect to server
+		IRCBot_connect(&bot,Stringcp_from_cstr("flygande-toalett.tk"),1568);
 
-	IRCBot_setNickname(&bot,Stringcp_from_cstr("Toabot"));
-	IRCBot_setUsername(&bot,Stringcp_from_cstr("Toabot"));
-	IRCBot_setCommandPrefixc(&bot,'!');
+		IRCBot_setNickname(&bot,Stringcp_from_cstr("Toabot"));
+		IRCBot_setUsername(&bot,Stringcp_from_cstr("Toabot"));
+		IRCBot_setCommandPrefixc(&bot,'!');
 
-	//While a message is sent from the server
-	while(irc_read(&bot.connection,&onMessageFunc));
-	
-	//Disconnect connection
-	IRCBot_disconnect(&bot);
+		//While a message is sent from the server
+		while(bot.exit==IRCBOT_EXIT_FALSE && irc_read(&bot.connection,&onMessageFunc));
+		botExit=bot.exit;
 
-	//Free resources
-	IRCBot_free(&bot);
+		//Disconnect connection
+		IRCBot_disconnect(&bot);
+
+		//Free resources
+		IRCBot_free(&bot);
+
+		if(botExit==IRCBOT_EXIT_RESTART)
+			goto Bot;
+	}
 
 	return EXIT_SUCCESS;
 }

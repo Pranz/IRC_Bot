@@ -37,7 +37,7 @@ union CommandArgument{
 
 	struct{
 		const char* arg_begin;
-		const char* arg_end
+		const char* arg_end;
 	}free;
 };
 
@@ -49,7 +49,7 @@ struct Command{
 	union{
 		struct{
 			unsigned int argCount;
-			struct CommandParameter args[];
+			struct CommandParameter* args;
 		}value;
 	}args;
 };

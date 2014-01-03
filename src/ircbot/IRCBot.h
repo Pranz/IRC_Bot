@@ -26,6 +26,12 @@ struct IRCBot{
 	struct DynamicArray/*<LinkedList<struct Command*>*>*/ commands;
 
 	LinkedList/*<struct Plugin*>*/* plugins;
+
+	enum IRCBot_Exit{
+		IRCBOT_EXIT_FALSE,
+		IRCBOT_EXIT_SHUTDOWN,
+		IRCBOT_EXIT_RESTART
+	}exit;
 };
 
 bool IRCBot_initialize(struct IRCBot* bot);
@@ -35,6 +41,8 @@ bool IRCBot_connect(struct IRCBot* bot,Stringcp host,unsigned short port);
 bool IRCBot_disconnect(struct IRCBot* bot);
 
 #define IRCBot_isConnected(bot) ((bot)->connected)
+#define IRCBot_shutdown(bot) ((bot)->exit=IRCBOT_EXIT_SHUTDOWN)
+#define IRCBot_restart(bot) ((bot)->exit=IRCBOT_EXIT_RESTART)
 
 //IRCBot must be connected for these functions
 void IRCBot_setNickname(struct IRCBot* bot,Stringcp name);
@@ -43,6 +51,9 @@ void IRCBot_setRealname(struct IRCBot* bot,Stringcp name);
 
 void IRCBot_setCommandPrefix(struct IRCBot* bot,Stringcp prefix);
 void IRCBot_setCommandPrefixc(struct IRCBot* bot,char prefix);
+
+void IRCBot_joinChannel(struct IRCBot* bot,const char* channel);
+void IRCBot_partChannel(struct IRCBot* bot,const char* channel);
 
 #define IRCBOT_ERROR_CONNECT 1
 #define IRCBOT_ERROR_MEMORY  2

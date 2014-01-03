@@ -61,6 +61,8 @@ bool IRCBot_initialize(struct IRCBot* bot){
 
 	bot->plugins=LinkedList_init;
 
+	bot->exit=IRCBOT_EXIT_FALSE;
+
 	return true;
 }
 
@@ -79,9 +81,6 @@ bool IRCBot_free(struct IRCBot* bot){
 	Stringp_free_malloc(&bot->error.message);
 	Stringp_free_malloc(&bot->commandPrefix);
 	freeCommands(&bot->commands);
-
-	//Free the mallocated structure
-	free(bot);
 
 	return true;
 }
@@ -227,4 +226,12 @@ void IRCBot_setCommandPrefixc(struct IRCBot* bot,char prefix){
 	bot->commandPrefix.ptr[0]=prefix;
 	bot->commandPrefix.ptr[1]='\0';
 	bot->commandPrefix.length=1;
+}
+
+void IRCBot_joinChannel(struct IRCBot* bot,const char* channel){
+	irc_join_channel(&bot->connection,channel);
+}
+
+void IRCBot_partChannel(struct IRCBot* bot,const char* channel){
+	irc_part_channel(&bot->connection,channel);
 }

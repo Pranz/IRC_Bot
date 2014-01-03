@@ -17,9 +17,9 @@ const char plugin_author[]  = "Lolirofle";
 static struct Command* c=NULL;
 
 bool plugin_onLoad(struct IRCBot* bot){
-	if(!(c=malloc(sizeof(struct Command)*5))){
+	if(!(c=malloc(sizeof(struct Command)*8))){
 		fputs("Error: Cannot allocate memory for commands",stderr);
-		exit(EXIT_FAILURE);
+		return false;
 	}
 
 	c[0]=(struct Command){
@@ -54,7 +54,7 @@ bool plugin_onLoad(struct IRCBot* bot){
 		Stringcp_from_cstr("echo"),
 		Stringcp_from_cstr("Echoes the arguments"),
 		function(bool,(struct IRCBot* bot,Stringcp target,union CommandArgument* arg){
-			irc_send_message(&bot->connection,target,STRINGCP(arg->free.arg_begin,arg->free.arg_end-arg->free.arg_begin);
+			irc_send_message(&bot->connection,target,STRINGCP(arg->free.arg_begin,arg->free.arg_end-arg->free.arg_begin));
 			return true;
 		}),
 		0
@@ -83,7 +83,34 @@ bool plugin_onLoad(struct IRCBot* bot){
 		}),
 		0
 	};
-	return registerCommandsFromArray(&bot->commands,c,5);
+	c[5]=(struct Command){
+		Stringcp_from_cstr("shutdown"),
+		Stringcp_from_cstr("Shutdown the bot"),
+		function(bool,(struct IRCBot* bot,Stringcp target,union CommandArgument* arg){
+			IRCBot_shutdown(bot);
+			return true;
+		}),
+		0
+	};
+	c[6]=(struct Command){
+		Stringcp_from_cstr("restart"),
+		Stringcp_from_cstr("Restart the bot"),
+		function(bool,(struct IRCBot* bot,Stringcp target,union CommandArgument* arg){
+			IRCBot_restart(bot);
+			return true;
+		}),
+		0
+	};
+	c[7]=(struct Command){
+		Stringcp_from_cstr("reload"),
+		Stringcp_from_cstr("Reload the bot"),
+		function(bool,(struct IRCBot* bot,Stringcp target,union CommandArgument* arg){
+			irc_send_message(&bot->connection,target,STRINGCP("Not implemented",15));
+			return true;
+		}),
+		0
+	};
+	return registerCommandsFromArray(&bot->commands,c,8);
 }
 
 bool plugin_onUnload(struct IRCBot* bot){
