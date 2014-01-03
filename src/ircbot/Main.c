@@ -86,7 +86,7 @@ void onMessageFunc(const irc_connection* connection,const irc_message* message){
 		case IRC_MESSAGE_COMMAND_NUMBER:
 			if(message->command_type_number == 1){
 				irc_join_channel(connection,"#bot");
-				//irc_join_channel(connection,"#toa");
+				irc_join_channel(connection,"#toa");
 			}
 			break;
 		case IRC_MESSAGE_COMMAND_PRIVMSG:{

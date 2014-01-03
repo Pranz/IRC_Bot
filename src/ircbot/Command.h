@@ -5,31 +5,53 @@
 
 struct IRCBot;
 
-enum CommandArgumentType{
-	COMMAND_ARGUMENT_TYPE_INTEGER,
-	COMMAND_ARGUMENT_TYPE_STRING,
-	COMMAND_ARGUMENT_TYPE_FLOATINGPOINT,
-	COMMAND_ARGUMENT_TYPE_CHARACTER
+enum CommandParameterType{
+	COMMAND_PARAMETER_TYPE_SEPARATED,
+	COMMAND_PARAMETER_TYPE_FREE
 };
 
-enum CommandArgumentRequirement{
-	COMMAND_ARGUMENT_REQUIRED,
-	COMMAND_ARGUMENT_OPTIONAL,
-	COMMAND_ARGUMENT_VARARG
+enum CommandParameterValueType{
+	COMMAND_PARAMETER_VALUE_TYPE_INTEGER,
+	COMMAND_PARAMETER_VALUE_TYPE_STRING,
+	COMMAND_PARAMETER_VALUE_TYPE_FLOATINGPOINT,
+	COMMAND_PARAMETER_VALUE_TYPE_CHARACTER
 };
 
-struct CommandArgument{
+enum CommandParameterValueRequirement{
+	COMMAND_PARAMETER_VALUE_REQUIRED,
+	COMMAND_PARAMETER_VALUE_OPTIONAL,
+	COMMAND_PARAMETER_VALUE_VARARG
+};
+
+struct CommandParameterValue{
 	Stringp name;
-	enum CommandArgumentType type;
-	enum CommandArgumentRequirement requirement;
+	enum CommandParameterValueType type;
+	enum CommandParameterValueRequirement requirement;
+};
+
+union CommandArgument{
+	struct{
+		unsigned int argCount;
+		Stringp* args;
+	}value;
+
+	struct{
+		const char* arg_begin;
+		const char* arg_end
+	}free;
 };
 
 struct Command{
 	Stringcp name;
 	Stringcp help;
-	bool(*func)(struct IRCBot* bot,Stringcp target,const char* arg_begin,const char* arg_end);
-	unsigned int argCount;
-	struct CommandArgument args[];
+	bool(*func)(struct IRCBot* bot,Stringcp target,union CommandArgument* arg);
+	enum CommandParameterType argType;
+	union{
+		struct{
+			unsigned int argCount;
+			struct CommandParameter args[];
+		}value;
+	}args;
 };
 
 #endif

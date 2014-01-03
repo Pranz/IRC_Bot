@@ -25,7 +25,7 @@ bool plugin_onLoad(struct IRCBot* bot){
 	c[0]=(struct Command){
 		Stringcp_from_cstr("test"),
 		Stringcp_from_cstr("Test command"),
-		function(bool,(struct IRCBot* bot,Stringcp target,const char* arg_begin,const char* arg_end){
+		function(bool,(struct IRCBot* bot,Stringcp target,union CommandArgument* arg){
 			#define TEST_STRING "Test command has been executed"
 			irc_send_message(&bot->connection,target,STRINGCP(TEST_STRING,sizeof(TEST_STRING)));
 			return true;
@@ -35,7 +35,7 @@ bool plugin_onLoad(struct IRCBot* bot){
 	c[1]=(struct Command){
 		Stringcp_from_cstr("version"),
 		Stringcp_from_cstr("Outputs version of bot"),
-		function(bool,(struct IRCBot* bot,Stringcp target,const char* arg_begin,const char* arg_end){
+		function(bool,(struct IRCBot* bot,Stringcp target,union CommandArgument* arg){
 			irc_send_message(&bot->connection,target,IRCBot_signature);
 			return true;
 		}),
@@ -44,17 +44,17 @@ bool plugin_onLoad(struct IRCBot* bot){
 	c[2]=(struct Command){
 		Stringcp_from_cstr("bot"),
 		Stringcp_from_cstr("Call me"),
-		function(bool,(struct IRCBot* bot,Stringcp target,const char* arg_begin,const char* arg_end){
+		function(bool,(struct IRCBot* bot,Stringcp target,union CommandArgument* arg){
 			irc_send_message(&bot->connection,target,STRINGCP("IT'S A ME, TOABOTU",18));
 			return true;
 		}),
 		0
 	};
 	c[3]=(struct Command){
-		Stringcp_from_cstr("1234567890abcdef"),
-		Stringcp_from_cstr("Langt kommando"),
-		function(bool,(struct IRCBot* bot,Stringcp target,const char* arg_begin,const char* arg_end){
-			puts("Ja: aa");
+		Stringcp_from_cstr("echo"),
+		Stringcp_from_cstr("Echoes the arguments"),
+		function(bool,(struct IRCBot* bot,Stringcp target,union CommandArgument* arg){
+			irc_send_message(&bot->connection,target,STRINGCP(arg->free.arg_begin,arg->free.arg_end-arg->free.arg_begin);
 			return true;
 		}),
 		0
@@ -62,7 +62,7 @@ bool plugin_onLoad(struct IRCBot* bot){
 	c[4]=(struct Command){
 		Stringcp_from_cstr("help"),
 		Stringcp_from_cstr("Outputs a list of commands and their usage"),
-		function(bool,(struct IRCBot* bot,Stringcp target,const char* arg_begin,const char* arg_end){
+		function(bool,(struct IRCBot* bot,Stringcp target,union CommandArgument* arg){
 			char str[512];
 			size_t strLength=0;
 

@@ -127,6 +127,16 @@ inline void irc_join_channel(const irc_connection* connection,const char* channe
 	irc_send_rawf(connection,"JOIN %s\r\n",channel);
 }
 
+/**
+ * Part from a channel in a irc connection
+ *
+ * @param id      Id of the connection
+ * @param channel Channel name
+ */
+inline void irc_part_channel(const irc_connection* connection,const char* channel){
+	irc_send_rawf(connection,"PART %s\r\n",channel);
+}
+
 void irc_parse_message(const irc_connection* connection,Stringcp raw_message,void(*onMessageFunc)(const irc_connection* connection,const irc_message* message));
 
 void irc_send_message(const irc_connection* connection,Stringcp target,Stringcp message);
