@@ -110,3 +110,19 @@ bool Plugin_unload(struct IRCBot* bot,struct Plugin* plugin){
 	
 	return true;
 }
+
+void Plugin_unloadAll(struct IRCBot* bot){
+	struct Plugin* plugin;
+
+	//For each plugin in the list
+	while((plugin=LinkedList_pop(&bot->plugins))){
+		if(!plugin->functions.onUnload(bot))
+			fputs("Modules: Warning: onUnload function failed\n",stderr);
+
+		//Close dynamic library
+		dlclose(plugin->lib);
+
+		//Free structure
+		free(plugin);
+	}
+}

@@ -5,6 +5,7 @@
 #include "ircinterface/irc.h"
 #include "Commands.h"
 #include <lolie/Stringp.h>
+#include <lolie/String.h>
 
 const Stringcp IRCBot_signature={IRCBOT_NAME " v" IRCBOT_VERSION,sizeof(IRCBOT_NAME " v" IRCBOT_VERSION)-1};
 
@@ -81,6 +82,10 @@ bool IRCBot_free(struct IRCBot* bot){
 	Stringp_free_malloc(&bot->error.message);
 	Stringp_free_malloc(&bot->commandPrefix);
 	freeCommands(&bot->commands);
+
+	//Free channel list
+	for(LinkedList** list=&bot->channels;*list!=NULL;)
+		free(LinkedList_pop(list));
 
 	return true;
 }
@@ -228,10 +233,26 @@ void IRCBot_setCommandPrefixc(struct IRCBot* bot,char prefix){
 	bot->commandPrefix.length=1;
 }
 
-void IRCBot_joinChannel(struct IRCBot* bot,const char* channel){
-	irc_join_channel(&bot->connection,channel);
+void IRCBot_joinChannel(struct IRCBot* bot,Stringcp channel){
+	//Mallocate and copy string for storing in bot structure
+	String* channelName=String_malloc_from_stringcp_nt(channel);
+	LinkedList_push(&bot->channels,channelName);
+
+	//Send JOIN message
+	irc_join_channel(&bot->connection,channelName->data);
 }
 
-void IRCBot_partChannel(struct IRCBot* bot,const char* channel){
-	irc_part_channel(&bot->connection,channel);
+void IRCBot_partChannel(struct IRCBot* bot,Stringcp channel){
+	for(LinkedList** listNode=&bot->channels;*listNode!=NULL;listNode=&(*listNode)->next){
+		if(((String*)(*listNode)->ptr)->length==channel.length && memcmp(((String*)(*listNode)->ptr)->data,channel.ptr,channel.length)==0){
+			String* channelName=LinkedList_pop(listNode);
+
+			//Send PART message
+			irc_part_channel(&bot->connection,channelName->data);
+
+			free(channelName);
+			
+			break;
+		}
+	}
 }

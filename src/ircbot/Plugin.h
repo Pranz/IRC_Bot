@@ -5,12 +5,20 @@
 #include <lolie/TypeAliases.h>
 #include <lolie/Stringp.h>
 struct IRCBot;
+union CommandArgument;
 
 struct Plugin{
 	void* lib;
 	struct{
-		bool(*onLoad)(struct IRCBot* bot);
-		bool(*onUnload)(struct IRCBot* bot);
+		bool(*onLoad)      (struct IRCBot* bot);
+		bool(*onUnload)    (struct IRCBot* bot);
+		bool(*onConnect)   (struct IRCBot* bot);
+		bool(*onDisconnect)(struct IRCBot* bot);
+		bool(*onCommand)   (struct IRCBot* bot,Stringp command,union CommandArgument* arg);
+		bool(*onJoin)      (struct IRCBot* bot,Stringp channel);
+		bool(*onPart)      (struct IRCBot* bot,Stringp channel);
+		bool(*onUserJoin)  (struct IRCBot* bot,Stringp nickname,Stringp channel);
+		bool(*onUserPart)  (struct IRCBot* bot,Stringp nickname,Stringp channel);
 	}functions;
 	struct{
 		const char* version;
@@ -40,5 +48,10 @@ bool Plugin_unload(struct IRCBot* bot,struct Plugin* plugin);
  * @return              True if successful, false if error
  */
 bool Plugin_loadAll(struct IRCBot* bot,const char* directoryPath);
+
+/**
+ * Unloads all plugins, freeing all the resources allocated
+ */
+void Plugin_unloadAll(struct IRCBot* bot);
 
 #endif

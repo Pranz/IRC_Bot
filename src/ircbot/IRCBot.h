@@ -21,11 +21,22 @@ struct IRCBot{
 	Stringp realname;
 	bool connected;
 	struct IRCBot_Error error;
+	LinkedList/*<const String*>*/* channels;
 
 	Stringp commandPrefix;
 	struct DynamicArray/*<LinkedList<struct Command*>*>*/ commands;
 
 	LinkedList/*<struct Plugin*>*/* plugins;
+
+	struct{
+		LinkedList* onConnect;
+		LinkedList* onDisconnect;
+		LinkedList* onCommand;
+		LinkedList* onJoin;
+		LinkedList* onPart;
+		LinkedList* onUserJoin;
+		LinkedList* onUserPart;
+	}pluginHooks;
 
 	enum IRCBot_Exit{
 		IRCBOT_EXIT_FALSE,
@@ -52,8 +63,8 @@ void IRCBot_setRealname(struct IRCBot* bot,Stringcp name);
 void IRCBot_setCommandPrefix(struct IRCBot* bot,Stringcp prefix);
 void IRCBot_setCommandPrefixc(struct IRCBot* bot,char prefix);
 
-void IRCBot_joinChannel(struct IRCBot* bot,const char* channel);
-void IRCBot_partChannel(struct IRCBot* bot,const char* channel);
+void IRCBot_joinChannel(struct IRCBot* bot,Stringcp channel);
+void IRCBot_partChannel(struct IRCBot* bot,Stringcp channel);
 
 #define IRCBOT_ERROR_CONNECT 1
 #define IRCBOT_ERROR_MEMORY  2

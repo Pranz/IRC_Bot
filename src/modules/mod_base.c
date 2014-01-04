@@ -10,6 +10,8 @@
 #include <ircbot/Commands.h>
 #include <lolie/TypeAliases.h>
 #include <lolie/DynamicArray.h>
+#include <lolie/String.h>
+#include <lolie/Stringp.h>
 
 const char plugin_version[] = "1.0";
 const char plugin_author[]  = "Lolirofle";
@@ -17,7 +19,7 @@ const char plugin_author[]  = "Lolirofle";
 static struct Command* c=NULL;
 
 bool plugin_onLoad(struct IRCBot* bot){
-	if(!(c=malloc(sizeof(struct Command)*8))){
+	if(!(c=malloc(sizeof(struct Command)*11))){
 		fputs("Error: Cannot allocate memory for commands",stderr);
 		return false;
 	}
@@ -30,7 +32,7 @@ bool plugin_onLoad(struct IRCBot* bot){
 			irc_send_message(&bot->connection,target,STRINGCP(TEST_STRING,sizeof(TEST_STRING)));
 			return true;
 		}),
-		0
+		COMMAND_PARAMETER_TYPE_NONE
 	};
 	c[1]=(struct Command){
 		Stringcp_from_cstr("version"),
@@ -39,7 +41,7 @@ bool plugin_onLoad(struct IRCBot* bot){
 			irc_send_message(&bot->connection,target,IRCBot_signature);
 			return true;
 		}),
-		0
+		COMMAND_PARAMETER_TYPE_NONE
 	};
 	c[2]=(struct Command){
 		Stringcp_from_cstr("bot"),
@@ -48,16 +50,16 @@ bool plugin_onLoad(struct IRCBot* bot){
 			irc_send_message(&bot->connection,target,STRINGCP("IT'S A ME, TOABOTU",18));
 			return true;
 		}),
-		0
+		COMMAND_PARAMETER_TYPE_NONE
 	};
 	c[3]=(struct Command){
 		Stringcp_from_cstr("echo"),
 		Stringcp_from_cstr("Echoes the arguments"),
 		function(bool,(struct IRCBot* bot,Stringcp target,union CommandArgument* arg){
-			irc_send_message(&bot->connection,target,STRINGCP(arg->free.arg_begin,arg->free.arg_end-arg->free.arg_begin));
+			irc_send_message(&bot->connection,target,STRINGCP(arg->free.begin,arg->free.end-arg->free.begin));
 			return true;
 		}),
-		0
+		COMMAND_PARAMETER_TYPE_NONE
 	};
 	c[4]=(struct Command){
 		Stringcp_from_cstr("help"),
@@ -81,7 +83,7 @@ bool plugin_onLoad(struct IRCBot* bot){
 			irc_send_message(&bot->connection,target,STRINGCP(str,strLength));
 			return true;
 		}),
-		0
+		COMMAND_PARAMETER_TYPE_NONE
 	};
 	c[5]=(struct Command){
 		Stringcp_from_cstr("shutdown"),
@@ -90,7 +92,7 @@ bool plugin_onLoad(struct IRCBot* bot){
 			IRCBot_shutdown(bot);
 			return true;
 		}),
-		0
+		COMMAND_PARAMETER_TYPE_NONE
 	};
 	c[6]=(struct Command){
 		Stringcp_from_cstr("restart"),
@@ -99,21 +101,61 @@ bool plugin_onLoad(struct IRCBot* bot){
 			IRCBot_restart(bot);
 			return true;
 		}),
-		0
+		COMMAND_PARAMETER_TYPE_NONE
 	};
 	c[7]=(struct Command){
 		Stringcp_from_cstr("reload"),
 		Stringcp_from_cstr("Reload the bot"),
 		function(bool,(struct IRCBot* bot,Stringcp target,union CommandArgument* arg){
-			irc_send_message(&bot->connection,target,STRINGCP("Not implemented",15));
+			Plugin_unloadAll(bot);
+
+			/*if(!Plugin_loadAll(bot,"modules")){
+				fputs("Warning: Failed to initialize modules\n",stderr);
+				irc_send_message(&bot->connection,target,STRINGCP("Modules failed to initialize",28));
+
+			}else
+				irc_send_message(&bot->connection,target,STRINGCP("Modules is reloaded",19));*/
 			return true;
 		}),
-		0
+		COMMAND_PARAMETER_TYPE_NONE
 	};
-	return registerCommandsFromArray(&bot->commands,c,8);
+	c[8]=(struct Command){
+		Stringcp_from_cstr("join"),
+		Stringcp_from_cstr("Makes the bot join specified channel"),
+		function(bool,(struct IRCBot* bot,Stringcp target,union CommandArgument* arg){
+			IRCBot_joinChannel(bot,STRINGCP(arg->free.begin,arg->free.end-arg->free.begin));
+			return true;
+		}),
+		COMMAND_PARAMETER_TYPE_NONE
+	};
+	c[9]=(struct Command){
+		Stringcp_from_cstr("part"),
+		Stringcp_from_cstr("Makes the bot part from specified channel"),
+		function(bool,(struct IRCBot* bot,Stringcp target,union CommandArgument* arg){
+			IRCBot_partChannel(bot,STRINGCP(arg->free.begin,arg->free.end-arg->free.begin));
+			return true;
+		}),
+		COMMAND_PARAMETER_TYPE_NONE
+	};
+	c[10]=(struct Command){
+		Stringcp_from_cstr("channels"),
+		Stringcp_from_cstr("List the channels the bot currently resides in"),
+		function(bool,(struct IRCBot* bot,Stringcp target,union CommandArgument* arg){
+			LinkedList_forEach(bot->channels,node){
+				irc_send_message(&bot->connection,target,Stringcp_from_string((String*)node->ptr));
+			}
+			return true;
+		}),
+		COMMAND_PARAMETER_TYPE_NONE
+	};
+	return registerCommandsFromArray(&bot->commands,c,11);
 }
 
 bool plugin_onUnload(struct IRCBot* bot){
+	for(uint i=0;i<11;++i)
+		if(!unregisterCommandByName(&bot->commands,c[i].name))
+			fprintf(stderr,"Module: mod_base: Warning: Command couldn't be freed: %s\n",c[i].name.ptr);
+
 	if(c){
 		free(c);
 		c=NULL;

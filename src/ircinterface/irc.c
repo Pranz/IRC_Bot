@@ -240,3 +240,8 @@ bool irc_read(const irc_connection* connection,void(*onMessageFunc)(const irc_co
 	return false;
 }
 
+extern inline void irc_set_nickname(const irc_connection* connection,const char* name);
+extern inline void irc_set_username(const irc_connection* connection,const char* username,const char* realname);
+extern inline void irc_join_channel(const irc_connection* connection,const char* channel);
+extern inline void irc_part_channel(const irc_connection* connection,const char* channel);
+extern inline void irc_send_rawnt(const irc_connection* connection,const char* str);

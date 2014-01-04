@@ -22,3 +22,6 @@ all: $(OUTPUTS)
 
 %$(OUTPOSTFIX): $(SRCDIR)/%.c
 	$(CC) -o $(BINDIR)/$(OUTPREFIX_BIN)$@$(OUTPOSTFIX_BIN) -Wl,-soname,$(OUTPREFIX_LIB)$@$(OUTPOSTFIX_LIB) $(LDFLAGS) $(CFLAGS) -I$(SRCDIR) $^
+
+clean:
+	rm -f $(OUTPUTS:%=$(BINDIR)/%)

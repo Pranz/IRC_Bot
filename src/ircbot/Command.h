@@ -6,8 +6,10 @@
 struct IRCBot;
 
 enum CommandParameterType{
+	COMMAND_PARAMETER_TYPE_NONE,
 	COMMAND_PARAMETER_TYPE_SEPARATED,
-	COMMAND_PARAMETER_TYPE_FREE
+	COMMAND_PARAMETER_TYPE_FREE,
+	COMMAND_PARAMETER_TYPE_CUSTOMPARSER
 };
 
 enum CommandParameterValueType{
@@ -36,8 +38,8 @@ union CommandArgument{
 	}value;
 
 	struct{
-		const char* arg_begin;
-		const char* arg_end;
+		const char* begin;
+		const char* end;
 	}free;
 };
 

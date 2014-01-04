@@ -69,8 +69,8 @@ Stringp Stringp_find_substr(Stringp str,bool(*findFunc)(Stringp str));
 void onCommand(struct IRCBot* bot,Stringcp command,Stringcp target,const char* arg_begin,const char* arg_end,const irc_message* message){
 	const struct Command* currentCommand;
 	union CommandArgument arg;
-	arg.free.arg_begin=arg_begin;
-	arg.free.arg_end=arg_end;
+	arg.free.begin=arg_begin;
+	arg.free.end=arg_end;
 
 	if((currentCommand=getCommand(&bot->commands,command)) && currentCommand->func(bot,target,&arg))
 		return;
@@ -89,8 +89,8 @@ void onMessageFunc(const irc_connection* connection,const irc_message* message){
 	switch(message->command_type){
 		case IRC_MESSAGE_COMMAND_NUMBER:
 			if(message->command_type_number == 1){
-				irc_join_channel(connection,"#bot");
-				//irc_join_channel(connection,"#toa");
+				IRCBot_joinChannel(&bot,STRINGCP("#bot",4));
+				//IRCBot_joinChannel(&bot,STRINGCP("#toa",4));
 			}
 			break;
 		case IRC_MESSAGE_COMMAND_PRIVMSG:{
@@ -160,6 +160,9 @@ int main(){
 
 		//Disconnect connection
 		IRCBot_disconnect(&bot);
+
+		//Unload all plugins
+		Plugin_unloadAll(&bot);
 
 		//Free resources
 		IRCBot_free(&bot);
