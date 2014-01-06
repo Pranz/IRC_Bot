@@ -142,7 +142,9 @@ void irc_parse_message(const irc_connection* connection,Stringcp raw_message,voi
 
 void irc_send_message(const irc_connection* connection,Stringcp target,Stringcp message);
 
-bool irc_read(const irc_connection* connection,void(*onMessageFunc)(const irc_connection* connection,const irc_message* message));
+bool irc_read_message(const irc_connection* connection,void(*onMessageFunc)(const irc_connection* connection,const irc_message* message));
+
+size_t irc_read(const irc_connection* connection,Stringp out);
 
 bool irc_disconnect(const irc_connection* connection);
 

@@ -1,5 +1,7 @@
 #include "Locale.h"
 
+enum Languages language = LANG_SWEDISH;
+
 const struct Locale locale[2]={
 	[LANG_SWEDISH]={
 		.lang_name={"swedish",7},

@@ -18,16 +18,9 @@
 //TODO: Help pages for a list of commands and syntax, explanation, etc.
 //TODO: Command aliases
 
-/**
- * Buffer initialization
- */
-#define IRC_WRITE_BUFFER_LEN 512
-char write_buffer[IRC_WRITE_BUFFER_LEN];
-
 struct IRCBot bot;
 
 char command_separator = ' ';
-enum Languages language = LANG_SWEDISH;
 
 Stringp string_splitted(Stringp str,size_t(*delimiterFunc)(Stringp str),bool(*onSplitFunc)(const char* begin,const char* end)){
 	const char* arg_begin=str.ptr;
@@ -148,15 +141,24 @@ int main(){
 			fputs("Warning: Failed to initialize modules\n",stderr);
 
 		//Connect to server
-		IRCBot_connect(&bot,Stringcp_from_cstr("flygande-toalett.tk"),1568);
+		IRCBot_connect(&bot,Stringcp_from_cstr("server"),1568);
 
-		IRCBot_setNickname(&bot,Stringcp_from_cstr("Toabot"));
-		IRCBot_setUsername(&bot,Stringcp_from_cstr("Toabot"));
+		Stringcp name=Stringcp_from_cstr("Toabot");
+		IRCBot_setNickname(&bot,name);
+		IRCBot_setUsername(&bot,name);
 		IRCBot_setCommandPrefixc(&bot,'!');
 
 		//While a message is sent from the server
-		while(bot.exit==IRCBOT_EXIT_FALSE && irc_read(&bot.connection,&onMessageFunc));
+		ReadLoop: while(bot.exit==IRCBOT_EXIT_FALSE && irc_read_message(&bot.connection,&onMessageFunc));
 		botExit=bot.exit;
+
+		if(botExit==IRCBOT_EXIT_RELOADPLUGINS){
+			Plugin_unloadAll(&bot);
+			if(!Plugin_loadAll(&bot,"modules"))
+				fputs("Warning: Failed to initialize modules\n",stderr);
+			bot.exit=IRCBOT_EXIT_FALSE;
+			goto ReadLoop;
+		}
 
 		//Disconnect connection
 		IRCBot_disconnect(&bot);

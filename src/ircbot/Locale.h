@@ -3,6 +3,8 @@
 
 #include <lolie/Stringp.h>
 
+extern enum Languages language;
+
 struct Locale{
 	Stringcp lang_name;
 

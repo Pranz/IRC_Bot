@@ -201,8 +201,10 @@ void irc_parse_message(const irc_connection* connection,Stringcp raw_message,voi
 			++read_ptr;
 		}
 
-		if(onMessageFunc!=NULL)
+		if(onMessageFunc!=NULL){
+			message.raw_message.length=read_ptr+2-message.raw_message.ptr;
 			onMessageFunc(connection,&message);
+		}
 		if(repeat){
 			TermNewCommand:
 			return irc_parse_message(connection,STRINGCP(read_ptr+2,raw_message.length-(read_ptr+2-raw_message.ptr)),onMessageFunc);
@@ -219,7 +221,7 @@ void irc_parse_message(const irc_connection* connection,Stringcp raw_message,voi
 	}
 }
 
-bool irc_read(const irc_connection* connection,void(*onMessageFunc)(const irc_connection* connection,const irc_message* message)){
+bool irc_read_message(const irc_connection* connection,void(*onMessageFunc)(const irc_connection* connection,const irc_message* message)){
 	static char read_buffer[IRC_BUFFER_LENGTH+1];
 	static int read_len;
 
@@ -238,6 +240,17 @@ bool irc_read(const irc_connection* connection,void(*onMessageFunc)(const irc_co
 		return true;
 	}
 	return false;
+}
+
+size_t irc_read(const irc_connection* connection,Stringp out){
+	int read_len=read(connection->id,out.ptr,out.length);
+
+	//If a message is sent from the server
+	if(read_len<=0){
+		fprintf(stderr,"Error: read() returned errorneous value: %i\n",read_len);
+		return 0;
+	}
+	return read_len;
 }
 
 extern inline void irc_set_nickname(const irc_connection* connection,const char* name);

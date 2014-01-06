@@ -13,6 +13,12 @@
 #define IRCBOT_VERSION "1.0.8-20140103"
 extern const Stringcp IRCBot_signature;
 
+/**
+ * Buffer initialization
+ */
+#define IRC_WRITE_BUFFER_LEN 512
+char write_buffer[IRC_WRITE_BUFFER_LEN];
+
 struct IRCBot{
 	struct irc_connection connection;
 	Stringp hostname;
@@ -41,7 +47,8 @@ struct IRCBot{
 	enum IRCBot_Exit{
 		IRCBOT_EXIT_FALSE,
 		IRCBOT_EXIT_SHUTDOWN,
-		IRCBOT_EXIT_RESTART
+		IRCBOT_EXIT_RESTART,
+		IRCBOT_EXIT_RELOADPLUGINS
 	}exit;
 };
 
@@ -54,6 +61,7 @@ bool IRCBot_disconnect(struct IRCBot* bot);
 #define IRCBot_isConnected(bot) ((bot)->connected)
 #define IRCBot_shutdown(bot) ((bot)->exit=IRCBOT_EXIT_SHUTDOWN)
 #define IRCBot_restart(bot) ((bot)->exit=IRCBOT_EXIT_RESTART)
+#define IRCBot_reloadPlugins(bot) ((bot)->exit=IRCBOT_EXIT_RELOADPLUGINS)
 
 //IRCBot must be connected for these functions
 void IRCBot_setNickname(struct IRCBot* bot,Stringcp name);

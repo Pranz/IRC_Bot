@@ -90,6 +90,7 @@ bool plugin_onLoad(struct IRCBot* bot){
 		Stringcp_from_cstr("Shutdown the bot"),
 		function(bool,(struct IRCBot* bot,Stringcp target,union CommandArgument* arg){
 			IRCBot_shutdown(bot);
+			irc_send_message(&bot->connection,target,STRINGCP("Shutting down...",16));
 			return true;
 		}),
 		COMMAND_PARAMETER_TYPE_NONE
@@ -99,6 +100,7 @@ bool plugin_onLoad(struct IRCBot* bot){
 		Stringcp_from_cstr("Restart the bot"),
 		function(bool,(struct IRCBot* bot,Stringcp target,union CommandArgument* arg){
 			IRCBot_restart(bot);
+			irc_send_message(&bot->connection,target,STRINGCP("Restarting...",13));
 			return true;
 		}),
 		COMMAND_PARAMETER_TYPE_NONE
@@ -107,14 +109,8 @@ bool plugin_onLoad(struct IRCBot* bot){
 		Stringcp_from_cstr("reload"),
 		Stringcp_from_cstr("Reload the bot"),
 		function(bool,(struct IRCBot* bot,Stringcp target,union CommandArgument* arg){
-			Plugin_unloadAll(bot);
-
-			/*if(!Plugin_loadAll(bot,"modules")){
-				fputs("Warning: Failed to initialize modules\n",stderr);
-				irc_send_message(&bot->connection,target,STRINGCP("Modules failed to initialize",28));
-
-			}else
-				irc_send_message(&bot->connection,target,STRINGCP("Modules is reloaded",19));*/
+			IRCBot_reloadPlugins(bot);
+			irc_send_message(&bot->connection,target,STRINGCP("Modules is reloaded",19));
 			return true;
 		}),
 		COMMAND_PARAMETER_TYPE_NONE
