@@ -5,9 +5,9 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <ircbot/IRCBot.h>
-#include <ircbot/Command.h>
-#include <ircbot/Commands.h>
+#include <ircbot/api/IRCBot.h>
+#include <ircbot/api/Command.h>
+#include <ircbot/api/Commands.h>
 #include <lolie/TypeAliases.h>
 #include <lolie/DynamicArray.h>
 #include <lolie/String.h>
@@ -29,7 +29,7 @@ bool plugin_onLoad(struct IRCBot* bot){
 		Stringcp_from_cstr("Test command"),
 		function(bool,(struct IRCBot* bot,Stringcp target,union CommandArgument* arg){
 			#define TEST_STRING "Test command has been executed"
-			irc_send_message(&bot->connection,target,STRINGCP(TEST_STRING,sizeof(TEST_STRING)));
+			IRCBot_sendMessage(bot,target,STRINGCP(TEST_STRING,sizeof(TEST_STRING)));
 			return true;
 		}),
 		COMMAND_PARAMETER_TYPE_NONE
@@ -38,7 +38,7 @@ bool plugin_onLoad(struct IRCBot* bot){
 		Stringcp_from_cstr("version"),
 		Stringcp_from_cstr("Outputs version of bot"),
 		function(bool,(struct IRCBot* bot,Stringcp target,union CommandArgument* arg){
-			irc_send_message(&bot->connection,target,IRCBot_signature);
+			IRCBot_sendMessage(bot,target,IRCBot_signature);
 			return true;
 		}),
 		COMMAND_PARAMETER_TYPE_NONE
@@ -47,7 +47,7 @@ bool plugin_onLoad(struct IRCBot* bot){
 		Stringcp_from_cstr("bot"),
 		Stringcp_from_cstr("Call me"),
 		function(bool,(struct IRCBot* bot,Stringcp target,union CommandArgument* arg){
-			irc_send_message(&bot->connection,target,STRINGCP("IT'S A ME, TOABOTU",18));
+			IRCBot_sendMessage(bot,target,STRINGCP("IT'S A ME, TOABOTU",18));
 			return true;
 		}),
 		COMMAND_PARAMETER_TYPE_NONE
@@ -56,7 +56,7 @@ bool plugin_onLoad(struct IRCBot* bot){
 		Stringcp_from_cstr("echo"),
 		Stringcp_from_cstr("Echoes the arguments"),
 		function(bool,(struct IRCBot* bot,Stringcp target,union CommandArgument* arg){
-			irc_send_message(&bot->connection,target,STRINGCP(arg->free.begin,arg->free.end-arg->free.begin));
+			IRCBot_sendMessage(bot,target,STRINGCP(arg->free.begin,arg->free.end-arg->free.begin));
 			return true;
 		}),
 		COMMAND_PARAMETER_TYPE_NONE
@@ -77,7 +77,7 @@ bool plugin_onLoad(struct IRCBot* bot){
 				}
 			}
 
-			irc_send_message(&bot->connection,target,STRINGCP(write_buffer,writePtr-write_buffer));
+			IRCBot_sendMessage(bot,target,STRINGCP(write_buffer,writePtr-write_buffer));
 
 			return true;
 		}),
@@ -88,7 +88,7 @@ bool plugin_onLoad(struct IRCBot* bot){
 		Stringcp_from_cstr("Shutdown the bot"),
 		function(bool,(struct IRCBot* bot,Stringcp target,union CommandArgument* arg){
 			IRCBot_shutdown(bot);
-			irc_send_message(&bot->connection,target,STRINGCP("Shutting down...",16));
+			IRCBot_sendMessage(bot,target,STRINGCP("Shutting down...",16));
 			return true;
 		}),
 		COMMAND_PARAMETER_TYPE_NONE
@@ -98,7 +98,7 @@ bool plugin_onLoad(struct IRCBot* bot){
 		Stringcp_from_cstr("Restart the bot"),
 		function(bool,(struct IRCBot* bot,Stringcp target,union CommandArgument* arg){
 			IRCBot_restart(bot);
-			irc_send_message(&bot->connection,target,STRINGCP("Restarting...",13));
+			IRCBot_sendMessage(bot,target,STRINGCP("Restarting...",13));
 			return true;
 		}),
 		COMMAND_PARAMETER_TYPE_NONE
@@ -108,7 +108,7 @@ bool plugin_onLoad(struct IRCBot* bot){
 		Stringcp_from_cstr("Reload the bot"),
 		function(bool,(struct IRCBot* bot,Stringcp target,union CommandArgument* arg){
 			IRCBot_reloadPlugins(bot);
-			irc_send_message(&bot->connection,target,STRINGCP("Modules is reloaded",19));
+			IRCBot_sendMessage(bot,target,STRINGCP("Modules is reloaded",19));
 			return true;
 		}),
 		COMMAND_PARAMETER_TYPE_NONE
@@ -146,7 +146,7 @@ bool plugin_onLoad(struct IRCBot* bot){
 				writePtr+=snprintf(writePtr,writeBufferEnd-writePtr,"%.*s, ",(int)((String*)node->ptr)->length,((String*)node->ptr)->data);
 			}
 
-			irc_send_message(&bot->connection,target,STRINGCP(write_buffer,writePtr-write_buffer));
+			IRCBot_sendMessage(bot,target,STRINGCP(write_buffer,writePtr-write_buffer));
 			return true;
 		}),
 		COMMAND_PARAMETER_TYPE_NONE

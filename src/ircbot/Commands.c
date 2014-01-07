@@ -1,6 +1,6 @@
 #include "Commands.h"
 
-#include "Command.h"
+#include "api/Command.h"
 #include <lolie/LinkedList.h>
 #include <lolie/DynamicArray.h>
 #include <lolie/Array.h>
@@ -29,7 +29,7 @@ void freeCommands(struct DynamicArray* commands){
 	//TODO: Free all the other resources
 }
 
-const struct Command* getCommand(struct DynamicArray* commands,Stringcp name){
+const struct Command* getCommand(const struct DynamicArray* commands,Stringcp name){
 	if(name.length>commands->capacity || DynamicArray__get(*commands,name.length)==NULL)
 		return NULL;
 
@@ -115,4 +115,10 @@ bool unregisterCommandByName(struct DynamicArray* commands,Stringcp commandName)
 			return memcmp(command->name.ptr,commandName.ptr,commandName.length)==0;
 		})
 	);
+}
+
+void unregisterCommands(struct DynamicArray* commands){
+	DynamicArray_forEach(*commands,list){
+		LinkedList_removeAll((LinkedList**)list);
+	}
 }

@@ -1,0 +1,2 @@
+#!/bin/sh
+octave -q -f --no-init-file --no-line-editing --no-site-file --no-window-system

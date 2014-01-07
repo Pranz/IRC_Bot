@@ -4,7 +4,7 @@
 //gcc -fPIC -shared -Wl,-soname,mod_test.so -o mod_test.so mod_test.c
 
 #include <stdio.h>
-#include <ircbot/IRCBot.h>
+#include <ircbot/api/IRCBot.h>
 
 const char plugin_version[] = "1.0";
 const char plugin_author[]  = "Lolirofle";

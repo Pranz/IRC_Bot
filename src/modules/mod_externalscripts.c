@@ -3,12 +3,12 @@
 #include <ctype.h>
 #include <dlfcn.h>
 #include <dirent.h>
-#include <ircbot/IRCBot.h>
-#include <ircbot/Command.h>
-#include <ircbot/Commands.h>
+#include <ircbot/api/IRCBot.h>
+#include <ircbot/api/Command.h>
+#include <ircbot/api/Commands.h>
+#include <ircbot/pipes.h>
 #include <lolie/TypeAliases.h>
 #include <lolie/Stringp.h>
-#include <ircbot/pipes.h>
 
 const char plugin_version[] ="1.2";
 const char plugin_author[]  ="Lolirofle";
@@ -45,7 +45,7 @@ bool plugin_onCommand(struct IRCBot* bot,Stringcp target,Stringcp command,union 
 	size_t len=fread(buffer,sizeof(char),BUFFER_LENGTH,stream.out);
 	p2flushRead(stream);
 	if(len>1)
-		irc_send_message(&bot->connection,target,STRINGCP(buffer,len));
+		IRCBot_sendMessage(bot,target,STRINGCP(buffer,len));
 
 	if(p2close(stream)!=0)
 		return true;
@@ -84,7 +84,7 @@ bool plugin_onLoad(struct IRCBot* bot){
 			//Free resources
 			closedir(directory);
 
-			irc_send_message(&bot->connection,target,STRINGCP(write_buffer,writePtr-write_buffer));
+			IRCBot_sendMessage(bot,target,STRINGCP(write_buffer,writePtr-write_buffer));
 			return true;
 		}),
 		COMMAND_PARAMETER_TYPE_NONE

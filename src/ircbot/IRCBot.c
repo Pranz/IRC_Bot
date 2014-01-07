@@ -110,10 +110,14 @@ bool IRCBot_connect(struct IRCBot* bot,Stringcp host,unsigned short port){
 	}
 
 	//Connect using arguments
-	bot->connection=irc_connect(bot->hostname.ptr,port);
+	if(!(bot->connection=malloc(sizeof(struct irc_connection)))){
+		bot->error.code=IRCBOT_ERROR_MEMORY;
+		return false;
+	}
+	*bot->connection=irc_connect(bot->hostname.ptr,port);
 
 	//Error checking
-	if(bot->connection.id<0){
+	if(bot->connection->id<0){
 		bot->error.code=IRCBOT_ERROR_CONNECT;
 		bot->error.message.length=46*sizeof(char)+8;
 		char* str=malloc(bot->error.message.length);
@@ -121,7 +125,7 @@ bool IRCBot_connect(struct IRCBot* bot,Stringcp host,unsigned short port){
 			bot->error.code=IRCBOT_ERROR_MEMORY;
 			return false;
 		}
-		bot->error.message.length=snprintf(str,bot->error.message.length,"Error: IRC connection id is a negative value: %i",bot->connection.id);
+		bot->error.message.length=snprintf(str,bot->error.message.length,"Error: IRC connection id is a negative value: %i",bot->connection->id);
 		bot->error.message.ptr=str;
 		return false;
 	}
@@ -143,7 +147,7 @@ bool IRCBot_disconnect(struct IRCBot* bot){
 
 	//Disconnect connection
 	bot->connected=false;
-	if(!irc_disconnect(&bot->connection)){
+	if(!irc_disconnect(bot->connection)){
 		static const Stringcp disconnectError={"IRC disconnect failed",21};
 
 		bot->error.code=IRCBOT_ERROR_DISCONNECT;
@@ -151,6 +155,8 @@ bool IRCBot_disconnect(struct IRCBot* bot){
 		memcpy(bot->error.message.ptr,disconnectError.ptr,disconnectError.length);
 		return false;
 	}
+
+	free(bot->connection);
 
 	return true;
 }
@@ -170,7 +176,7 @@ void IRCBot_setNickname(struct IRCBot* bot,Stringcp name){//TODO: Some kind of e
 	}
 
 	//Send to server
-	irc_set_nickname(&bot->connection,bot->nickname.ptr);
+	irc_set_nickname(bot->connection,bot->nickname.ptr);
 }
 
 void IRCBot_setUsername(struct IRCBot* bot,Stringcp name){
@@ -188,7 +194,7 @@ void IRCBot_setUsername(struct IRCBot* bot,Stringcp name){
 	}
 
 	//Send to server
-	irc_set_username(&bot->connection,bot->username.ptr,bot->realname.ptr);
+	irc_set_username(bot->connection,bot->username.ptr,bot->realname.ptr);
 }
 
 void IRCBot_setRealname(struct IRCBot* bot,Stringcp name){
@@ -206,7 +212,7 @@ void IRCBot_setRealname(struct IRCBot* bot,Stringcp name){
 	}
 
 	//Send to server
-	irc_set_username(&bot->connection,bot->username.ptr,bot->realname.ptr);
+	irc_set_username(bot->connection,bot->username.ptr,bot->realname.ptr);
 }
 
 void IRCBot_setCommandPrefix(struct IRCBot* bot,Stringcp prefix){
@@ -256,7 +262,7 @@ void IRCBot_joinChannel(struct IRCBot* bot,Stringcp channel){
 	LinkedList_push(&bot->channels,channelName);
 
 	//Send JOIN message
-	irc_join_channel(&bot->connection,channelName->data);
+	irc_join_channel(bot->connection,channelName->data);
 }
 
 void IRCBot_partChannel(struct IRCBot* bot,Stringcp channel){
@@ -271,11 +277,19 @@ void IRCBot_partChannel(struct IRCBot* bot,Stringcp channel){
 			String* channelName=LinkedList_pop(listNode);
 
 			//Send PART message
-			irc_part_channel(&bot->connection,channelName->data);
+			irc_part_channel(bot->connection,channelName->data);
 
 			free(channelName);
 			
 			break;
 		}
 	}
+}
+
+void IRCBot_sendMessage(struct IRCBot* bot,Stringcp target,Stringcp message){
+	irc_send_message(bot->connection,target,message);
+}
+
+void IRCBot_sendRaw(struct IRCBot* bot,Stringcp str){
+	irc_send_raw(bot->connection,str.ptr,str.length);
 }

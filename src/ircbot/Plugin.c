@@ -1,4 +1,4 @@
-#include "Plugin.h"
+#include "api/Plugin.h"
 
 #include <stdlib.h>
 #include <dlfcn.h>

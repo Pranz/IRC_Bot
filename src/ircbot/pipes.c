@@ -8,6 +8,8 @@
 
 struct PipedStream p2open(char* path,char* const argv[]){
 	/**
+	 * Visualization of the process:
+	 *
 	 *       |--------|
 	 * Input |  Pipe  | Output
 	 *  end  |--------|  end
@@ -24,6 +26,10 @@ struct PipedStream p2open(char* path,char* const argv[]){
 	 * | inPipe  ||  Program  || outPipe |
 	 * |---------||___________||---------|
 	 *     -->     Process text    -->
+	 * inPipe has a closed output end and
+	 * outPipe has a closed input end. This
+	 * makes it possible to read from the 
+	 * outPipe and write to the inPipe.
 	 */
 
 	pid_t pid;
@@ -106,6 +112,7 @@ extern void p2flushWrite(struct PipedStream stream);
 extern void p2flushRead(struct PipedStream stream);
 
 /*
+//Testing
 int main(void){
 	char* argv[]={"rev",NULL};
 	struct PipedStream stream=p2open("/usr/bin/rev",argv);

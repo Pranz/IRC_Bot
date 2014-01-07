@@ -1,5 +1,5 @@
-#ifndef __LOLIROFLE_IRCBOT_PLUGIN_H_INCLUDED__
-#define __LOLIROFLE_IRCBOT_PLUGIN_H_INCLUDED__
+#ifndef __LOLIROFLE_IRCBOT_API_PLUGIN_H_INCLUDED__
+#define __LOLIROFLE_IRCBOT_API_PLUGIN_H_INCLUDED__
 
 #include <lolie/LinkedList.h>
 #include <lolie/TypeAliases.h>

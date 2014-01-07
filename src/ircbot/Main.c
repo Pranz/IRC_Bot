@@ -10,7 +10,7 @@
 #include <ircinterface/irc.h>
 #include "Locale.h"
 #include "Commands.h"
-#include "Command.h"
+#include "api/Command.h"
 #include "IRCBot.h"
 #include "Plugin.h"
 
@@ -80,7 +80,7 @@ void onCommand(struct IRCBot* bot,Stringcp command,Stringcp target,const char* a
 			command,
 			STRINGP("\"",1)
 		);
-		irc_send_message(&bot->connection,target,STRINGCP(write_buffer,len));
+		irc_send_message(bot->connection,target,STRINGCP(write_buffer,len));
 	}
 }
 
@@ -161,14 +161,13 @@ int main(){
 		IRCBot_setCommandPrefixc(&bot,'!');
 
 		//While a message is sent from the server
-		ReadLoop: while(bot.exit==IRCBOT_EXIT_FALSE && irc_read_message(&bot.connection,&onMessageFunc));
-		botExit=bot.exit;
+		ReadLoop: while(bot.exit==IRCBOT_EXIT_FALSE && irc_read_message(bot.connection,&onMessageFunc));
 
 		if(botExit==IRCBOT_EXIT_RELOADPLUGINS){
+			bot.exit=IRCBOT_EXIT_FALSE;
 			Plugin_unloadAll(&bot);
 			if(!Plugin_loadAll(&bot,"modules"))
 				fputs("Warning: Failed to initialize modules\n",stderr);
-			bot.exit=IRCBOT_EXIT_FALSE;
 			goto ReadLoop;
 		}
 
@@ -177,6 +176,8 @@ int main(){
 
 		//Unload all plugins
 		Plugin_unloadAll(&bot);
+
+		botExit=bot.exit;
 
 		//Free resources
 		IRCBot_free(&bot);

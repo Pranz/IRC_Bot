@@ -1,9 +1,7 @@
-#ifndef __LOLIROFLE_IRCBOT_COMMAND_H_INCLUDED__
-#define __LOLIROFLE_IRCBOT_COMMAND_H_INCLUDED__
+#ifndef __LOLIROFLE_IRCBOT_API_COMMANDPARAMETER_H_INCLUDED__
+#define __LOLIROFLE_IRCBOT_API_COMMANDPARAMETER_H_INCLUDED__
 
 #include <lolie/Stringp.h>
-
-struct IRCBot;
 
 enum CommandParameterType{
 	COMMAND_PARAMETER_TYPE_NONE,
@@ -29,31 +27,6 @@ struct CommandParameterValue{
 	Stringp name;
 	enum CommandParameterValueType type;
 	enum CommandParameterValueRequirement requirement;
-};
-
-union CommandArgument{
-	struct{
-		unsigned int argCount;
-		Stringp* args;
-	}value;
-
-	struct{
-		const char* begin;
-		const char* end;
-	}free;
-};
-
-struct Command{
-	Stringcp name;
-	Stringcp help;
-	bool(*func)(struct IRCBot* bot,Stringcp target,union CommandArgument* arg);
-	enum CommandParameterType argType;
-	union{
-		struct{
-			unsigned int argCount;
-			struct CommandParameter* args;
-		}value;
-	}args;
 };
 
 #endif
