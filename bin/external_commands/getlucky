@@ -1,0 +1,9 @@
+#!/usr/bin/python
+
+import sys
+import requests
+
+args=sys.stdin.read()
+
+var = requests.get(r'http://www.google.com/search?q="'+args+'"&btnI',allow_redirects='false')
+print var.url

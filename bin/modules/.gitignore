@@ -3,5 +3,3 @@
 
 # Don't ignore this file
 !.gitignore
-!modules
-!external_commands
