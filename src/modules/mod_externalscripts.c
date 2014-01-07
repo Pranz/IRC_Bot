@@ -46,7 +46,8 @@ bool plugin_onCommand(struct IRCBot* bot,Stringcp target,Stringcp command,union 
 	if(len>1)
 		irc_send_message(&bot->connection,target,STRINGCP(buffer,len));
 
-	p2close(stream);
+	if(p2close(stream)!=0)
+		return true;
 
 	return false;
 }

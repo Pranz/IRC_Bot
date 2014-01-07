@@ -1,8 +1,3 @@
-//gcc -o mod_old.o -c -fPIC mod_old.c
-//gcc -shared -Wl,-soname,mod_old.so -o mod_old.so mod_old.o
-// OR
-//gcc -fPIC -shared -Wl,-soname,mod_old.so -o mod_old.so mod_old.c
-
 #include <stdio.h>
 #include <string.h>
 #include <time.h>

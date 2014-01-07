@@ -155,7 +155,7 @@ int main(){
 		//Connect to server
 		IRCBot_connect(&bot,Stringcp_from_cstr("server"),1568);
 
-		Stringcp name=Stringcp_from_cstr("Toabot2");
+		Stringcp name=Stringcp_from_cstr("Toabot");
 		IRCBot_setNickname(&bot,name);
 		IRCBot_setUsername(&bot,name);
 		IRCBot_setCommandPrefixc(&bot,'!');

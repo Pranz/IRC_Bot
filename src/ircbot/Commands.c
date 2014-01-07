@@ -45,8 +45,8 @@ bool registerCommand(struct DynamicArray* commands,const struct Command* command
 	if(!command || command->name.length==0)
 		return false;
 
-	if(command->name.length>commands->capacity){//If the array needs to be resized for the new command
-		DynamicArray_resize(commands,command->name.length);
+	if(command->name.length+1>commands->capacity){//If the array needs to be resized for the new command
+		DynamicArray_resize(commands,command->name.length+1);
 
 		Array_forEach(((Array){commands->array+commands->length,commands->capacity-commands->length}),list){
 			*(LinkedList**)list=LinkedList_init;//Set all new LinkedLists to the initial value
@@ -60,23 +60,24 @@ bool registerCommand(struct DynamicArray* commands,const struct Command* command
 }
 
 bool registerCommandsFromArray(struct DynamicArray* commands,const struct Command* cmds,size_t count){
-	if(!cmds)
+	if(!commands)
 		return false;
 
 	while(count-->0){
-		if(cmds->name.length==0)
-			return false;
+		if(cmds){
+			if(cmds->name.length==0)
+				return false;
 
-		if(cmds->name.length>commands->capacity){//If the array needs to be resized for the new commands
-			DynamicArray_resize(commands,cmds->name.length);
+			if(cmds->name.length+1>commands->capacity){//If the array needs to be resized for the new commands
+				DynamicArray_resize(commands,cmds->name.length+1);
 
-			Array_forEach(((Array){commands->array+commands->length,commands->capacity-commands->length}),list){
-				*(LinkedList**)list=LinkedList_init;//Set all new LinkedLists to the initial value
+				Array_forEach(((Array){commands->array+commands->length,commands->capacity-commands->length}),list){
+					*(LinkedList**)list=LinkedList_init;//Set all new LinkedLists to the initial value
+				}
+				commands->length=commands->capacity;
 			}
-			commands->length=commands->capacity;
+			LinkedList_push((LinkedList**)&DynamicArray__get(*commands,cmds->name.length),cmds);
 		}
-		LinkedList_push((LinkedList**)&DynamicArray__get(*commands,cmds->name.length),cmds);
-
 		++cmds;
 	}
 

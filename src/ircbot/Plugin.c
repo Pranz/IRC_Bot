@@ -61,7 +61,7 @@ struct Plugin* Plugin_load(struct IRCBot* bot,const char* filename){
 		fprintf(stderr,"Modules: Error: %s\n",dlerror());
 		goto Error;
 	}
-
+//TODO: Initialize plugin name here
 	//Load the required fields from the plugin
 	if(!(plugin->constants.version = dlsym(plugin->lib,"plugin_version"))){
 		fprintf(stderr,"Modules: Error: %s\n",dlerror());

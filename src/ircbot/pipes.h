@@ -2,21 +2,25 @@
 #define __LOLIROFLE_ESSENTIALS_PIPES_H_INCLUDED__
 
 #include <stdio.h>
+#include <sys/types.h>
 
 struct PipedStream{
 	FILE* in;
 	FILE* out;
+	pid_t pid;
 };
 
 struct PipedStream p2open(char* path,char* const argv[]);
-void p2close(struct PipedStream stream);
+int p2close(struct PipedStream stream);
 
 inline void p2flushWrite(struct PipedStream stream){
-	fclose(stream.in);
+	if(stream.in)
+		fclose(stream.in);
 }
 
 inline void p2flushRead(struct PipedStream stream){
-	fclose(stream.out);
+	if(stream.out)
+		fclose(stream.out);
 }
 
 #endif
