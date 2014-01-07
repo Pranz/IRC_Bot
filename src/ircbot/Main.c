@@ -65,6 +65,12 @@ void onCommand(struct IRCBot* bot,Stringcp command,Stringcp target,const char* a
 	arg.free.begin=arg_begin;
 	arg.free.end=arg_end;
 
+	//Check with plugin hooks
+	LinkedList_forEach(bot->pluginHooks.onCommand,node){
+		if(!(((typeof(((struct Plugin*)0)->functions.onCommand))(node->ptr))(bot,target,command,&arg)))
+			return;
+	}
+
 	if((currentCommand=getCommand(&bot->commands,command)) && currentCommand->func(bot,target,&arg))
 		return;
 	else{
@@ -79,6 +85,12 @@ void onCommand(struct IRCBot* bot,Stringcp command,Stringcp target,const char* a
 }
 
 void onMessageFunc(const irc_connection* connection,const irc_message* message){
+	//Check with plugin hooks
+	LinkedList_forEach(bot.pluginHooks.onMessage,node){
+		if(!((typeof(((struct Plugin*)0)->functions.onMessage))(node->ptr))(&bot,message));
+			return;
+	}
+
 	switch(message->command_type){
 		case IRC_MESSAGE_COMMAND_NUMBER:
 			if(message->command_type_number == 1){
@@ -143,7 +155,7 @@ int main(){
 		//Connect to server
 		IRCBot_connect(&bot,Stringcp_from_cstr("server"),1568);
 
-		Stringcp name=Stringcp_from_cstr("Toabot");
+		Stringcp name=Stringcp_from_cstr("Toabot2");
 		IRCBot_setNickname(&bot,name);
 		IRCBot_setUsername(&bot,name);
 		IRCBot_setCommandPrefixc(&bot,'!');

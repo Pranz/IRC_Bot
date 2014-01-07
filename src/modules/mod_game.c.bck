@@ -1,0 +1,36 @@
+#include <stdio.h>
+#include <string.h>
+#include <ircbot/IRCBot.h>
+#include <ircbot/Command.h>
+#include <ircbot/Commands.h>
+#include <lolie/TypeAliases.h>
+#include <lolie/Stringp.h>
+#include "mod_game.h"
+
+const char plugin_version[] = "1.0";
+const char plugin_author[]  = "Lolirofle";
+
+static struct Command gameCommand;
+static LinkedList/*<struct ToaModule_Game*>*/* games = LinkedList_init;
+static LinkedList/*<struct ToaModule_GameSession*>*/* gameSessions = LinkedList_init;
+
+bool plugin_onLoad(struct IRCBot* bot){
+	gameCommand=(struct Command){
+		Stringcp_from_cstr("game"),
+		Stringcp_from_cstr("Commands for IRC games"),
+		function(bool,(struct IRCBot* bot,Stringcp target,union CommandArgument* arg){
+			if(arg->free.begin==)
+				irc_send_message(&bot->connection,target,STRINGCP(TEST_STRING,sizeof(TEST_STRING)));
+			return true;
+		}),
+		COMMAND_PARAMETER_TYPE_FREE
+	};
+	
+	return registerCommand(&bot->commands,gameCommand);
+}
+
+bool plugin_onUnload(struct IRCBot* bot){
+	if(!unregisterCommandByName(&bot->commands,gameCommand.name))
+		fprintf(stderr,"Module: mod_game: Warning: Command couldn't be freed: %s\n",gameCommand.name.ptr);
+	return true;
+}

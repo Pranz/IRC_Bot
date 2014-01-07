@@ -38,6 +38,7 @@ struct IRCBot{
 		LinkedList* onConnect;
 		LinkedList* onDisconnect;
 		LinkedList* onCommand;
+		LinkedList* onMessage;
 		LinkedList* onJoin;
 		LinkedList* onPart;
 		LinkedList* onUserJoin;

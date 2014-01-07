@@ -94,6 +94,12 @@ bool IRCBot_connect(struct IRCBot* bot,Stringcp host,unsigned short port){
 	if(!bot || bot->connected)
 		return false;
 
+	//Check with plugin hooks
+	LinkedList_forEach(bot->pluginHooks.onConnect,node){
+		if(!((typeof(((struct Plugin*)0)->functions.onConnect))(node->ptr))(bot,host,port));
+			return false;
+	}
+
 	//Mallocate and copy string
 	bot->hostname=Stringp_from_malloc_copy_nt(host);
 
@@ -129,6 +135,11 @@ bool IRCBot_connect(struct IRCBot* bot,Stringcp host,unsigned short port){
 bool IRCBot_disconnect(struct IRCBot* bot){
 	if(!bot || !bot->connected)
 		return false;
+
+	//Call plugin hooks
+	LinkedList_forEach(bot->pluginHooks.onDisconnect,node){
+		((typeof(((struct Plugin*)0)->functions.onDisconnect))(node->ptr))(bot);
+	}
 
 	//Disconnect connection
 	bot->connected=false;
@@ -234,6 +245,12 @@ void IRCBot_setCommandPrefixc(struct IRCBot* bot,char prefix){
 }
 
 void IRCBot_joinChannel(struct IRCBot* bot,Stringcp channel){
+	//Check with plugin hooks
+	LinkedList_forEach(bot->pluginHooks.onJoin,node){
+		if(!((typeof(((struct Plugin*)0)->functions.onJoin))(node->ptr))(bot,channel));
+			return;
+	}
+
 	//Mallocate and copy string for storing in bot structure
 	String* channelName=String_malloc_from_stringcp_nt(channel);
 	LinkedList_push(&bot->channels,channelName);
@@ -243,6 +260,12 @@ void IRCBot_joinChannel(struct IRCBot* bot,Stringcp channel){
 }
 
 void IRCBot_partChannel(struct IRCBot* bot,Stringcp channel){
+	//Check with plugin hooks
+	LinkedList_forEach(bot->pluginHooks.onPart,node){
+		if(!((typeof(((struct Plugin*)0)->functions.onPart))(node->ptr))(bot,channel));
+			return;
+	}
+
 	for(LinkedList** listNode=&bot->channels;*listNode!=NULL;listNode=&(*listNode)->next){
 		if(((String*)(*listNode)->ptr)->length==channel.length && memcmp(((String*)(*listNode)->ptr)->data,channel.ptr,channel.length)==0){
 			String* channelName=LinkedList_pop(listNode);

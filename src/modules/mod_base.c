@@ -72,7 +72,7 @@ bool plugin_onLoad(struct IRCBot* bot){
 			strLength+=10;
 
 			DynamicArray_forEach(bot->commands,commandLengthList){
-				LinkedList_forEach(*(LinkedList**)commandLengthList,node){
+				LinkedList_forEach(*(LinkedList**)commandLengthList,node){//TODO: Could overflow
 					memcpy(str+strLength,((struct Command*)node->ptr)->name.ptr,((struct Command*)node->ptr)->name.length);
 					strLength+=((struct Command*)node->ptr)->name.length;
 					memcpy(str+strLength,", ",2);
@@ -136,7 +136,7 @@ bool plugin_onLoad(struct IRCBot* bot){
 	c[10]=(struct Command){
 		Stringcp_from_cstr("channels"),
 		Stringcp_from_cstr("List the channels the bot currently resides in"),
-		function(bool,(struct IRCBot* bot,Stringcp target,union CommandArgument* arg){
+		function(bool,(struct IRCBot* bot,Stringcp target,union CommandArgument* arg){//TODO: List the channels instead of echoing a message for each channel
 			LinkedList_forEach(bot->channels,node){
 				irc_send_message(&bot->connection,target,Stringcp_from_string((String*)node->ptr));
 			}

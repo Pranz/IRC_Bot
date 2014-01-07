@@ -6,21 +6,83 @@
 #include <lolie/Stringp.h>
 struct IRCBot;
 union CommandArgument;
+struct irc_message;
 
 struct Plugin{
 	void* lib;
 	struct{
+		/**
+		 * Called when plugin is loaded
+		 *
+		 * @return Returns whether the plugin successfully loaded
+		 */
 		bool(*onLoad)      (struct IRCBot* bot);
+
+		/**
+		 * Called when plugin is unloaded
+		 *
+		 * @return Returns whether the plugin successfully unloaded
+		 */
 		bool(*onUnload)    (struct IRCBot* bot);
-		bool(*onConnect)   (struct IRCBot* bot);
-		bool(*onDisconnect)(struct IRCBot* bot);
-		bool(*onCommand)   (struct IRCBot* bot,Stringp command,union CommandArgument* arg);
-		bool(*onJoin)      (struct IRCBot* bot,Stringp channel);
-		bool(*onPart)      (struct IRCBot* bot,Stringp channel);
-		bool(*onUserJoin)  (struct IRCBot* bot,Stringp nickname,Stringp channel);
-		bool(*onUserPart)  (struct IRCBot* bot,Stringp nickname,Stringp channel);
+
+		/**
+		 * Called before connecting to address
+		 *
+		 * @return Returns whether the bot should connect to the specified address
+		 */
+		bool(*onConnect)   (struct IRCBot* bot,Stringcp hostname,unsigned short port);
+
+		/**
+		 * Called before disconnecting
+		 *
+		 * @return
+		 */
+		void(*onDisconnect)(struct IRCBot* bot);
+
+		/**
+		 * Called before checking if command exists and executing it
+		 *
+		 * @return Returns whether it should continue searching for a command
+		 */
+		bool(*onCommand)   (struct IRCBot* bot,Stringcp target,Stringcp command,union CommandArgument* arg);
+
+		/**
+		 * Called after parsing a message and before parsing commands
+		 *
+		 * @return Returns whether it should continue with the onMessage hooks
+		 */
+		bool(*onMessage)   (struct IRCBot* bot,const struct irc_message* message);
+
+		/**
+		 * Called before bot joins a channel
+		 *
+		 * @return Returns whether it should join the channel
+		 */
+		bool(*onJoin)      (struct IRCBot* bot,Stringcp channel);
+
+		/**
+		 * Called before bot parts from a channel
+		 *
+		 * @return Returns whether it should part from the channel
+		 */
+		bool(*onPart)      (struct IRCBot* bot,Stringcp channel);
+
+		/**
+		 * Called when an user joins a channel
+		 *
+		 * @return
+		 */
+		void(*onUserJoin)  (struct IRCBot* bot,Stringcp nickname,Stringcp channel);
+
+		/**
+		 * Called when an user parts from a channel
+		 *
+		 * @return
+		 */
+		void(*onUserPart)  (struct IRCBot* bot,Stringcp nickname,Stringcp channel);
 	}functions;
 	struct{
+		const char* name;
 		const char* version;
 		const char* author;
 	}constants;
