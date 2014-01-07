@@ -8,11 +8,12 @@
 #include <lolie/ControlStructures.h>
 
 #include <ircinterface/irc.h>
+#include <ircinterface/irc_messagenumbers.h>
 #include "Locale.h"
 #include "Commands.h"
 #include "api/Command.h"
 #include "IRCBot.h"
-#include "Plugin.h"
+#include "api/Plugin.h"
 
 //TODO: "&&"" to combine commands and maybe `command` to insert a command with output as return value to an argument
 //TODO: Help pages for a list of commands and syntax, explanation, etc.
@@ -93,10 +94,37 @@ void onMessageFunc(const irc_connection* connection,const irc_message* message){
 
 	switch(message->command_type){
 		case IRC_MESSAGE_COMMAND_NUMBER:
-			if(message->command_type_number == 1){
-				IRCBot_joinChannel(&bot,STRINGCP("#bot",4));
-				//IRCBot_joinChannel(&bot,STRINGCP("#toa",4));
+			switch(message->command_type_number){
+				case 1:
+					IRCBot_joinChannel(&bot,STRINGCP("#bot",4));
+					//IRCBot_joinChannel(&bot,STRINGCP("#toa",4));
+					break;
+				case IRC_MESSAGENO_ERR_NONICKNAMEGIVEN:
+				case IRC_MESSAGENO_ERR_ERRONEUSNICKNAME:
+				case IRC_MESSAGENO_ERR_NICKNAMEINUSE:
+				case IRC_MESSAGENO_ERR_NICKCOLLISION:
+					//In case of infinite loop
+					if(bot.nickname.length>32)
+						break;
+
+					//Reallocate and copy string
+					bot.nickname.ptr=realloc(bot.nickname.ptr,++bot.nickname.length);
+					bot.nickname.ptr[bot.nickname.length-1]='_';
+
+					//realloc error check
+					if(!bot.nickname.ptr){
+						bot.error.code=IRCBOT_ERROR_MEMORY;
+						return;
+					}
+
+					//Send to server
+					irc_set_nickname(bot.connection,bot.nickname.ptr);
+					break;
+
+				default:
+					break;
 			}
+
 			break;
 		case IRC_MESSAGE_COMMAND_PRIVMSG:{
 			void onCommandRaw(Stringcp target,char* read_ptr_begin,char* read_ptr_end){
