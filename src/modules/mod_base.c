@@ -65,22 +65,20 @@ bool plugin_onLoad(struct IRCBot* bot){
 		Stringcp_from_cstr("help"),
 		Stringcp_from_cstr("Outputs a list of commands and their usage"),
 		function(bool,(struct IRCBot* bot,Stringcp target,union CommandArgument* arg){
-			char str[512];
-			size_t strLength=0;
+			char* writePtr=write_buffer;
+			char* writeBufferEnd=write_buffer+IRC_WRITE_BUFFER_LEN;
 
-			memcpy(str,"Commands: ",10);
-			strLength+=10;
+			writePtr+=snprintf(writePtr,writeBufferEnd-writePtr,"Commands: ");
 
+			//For each command list and existing commands
 			DynamicArray_forEach(bot->commands,commandLengthList){
-				LinkedList_forEach(*(LinkedList**)commandLengthList,node){//TODO: Could overflow
-					memcpy(str+strLength,((struct Command*)node->ptr)->name.ptr,((struct Command*)node->ptr)->name.length);
-					strLength+=((struct Command*)node->ptr)->name.length;
-					memcpy(str+strLength,", ",2);
-					strLength+=2;
+				LinkedList_forEach(*(LinkedList**)commandLengthList,node){
+					writePtr+=snprintf(writePtr,writeBufferEnd-writePtr,"%.*s, ",(int)((struct Command*)node->ptr)->name.length,((struct Command*)node->ptr)->name.ptr);
 				}
 			}
 
-			irc_send_message(&bot->connection,target,STRINGCP(str,strLength));
+			irc_send_message(&bot->connection,target,STRINGCP(write_buffer,writePtr-write_buffer));
+
 			return true;
 		}),
 		COMMAND_PARAMETER_TYPE_NONE
@@ -136,10 +134,19 @@ bool plugin_onLoad(struct IRCBot* bot){
 	c[10]=(struct Command){
 		Stringcp_from_cstr("channels"),
 		Stringcp_from_cstr("List the channels the bot currently resides in"),
-		function(bool,(struct IRCBot* bot,Stringcp target,union CommandArgument* arg){//TODO: List the channels instead of echoing a message for each channel
+		function(bool,(struct IRCBot* bot,Stringcp target,union CommandArgument* arg){
+			char* writePtr=write_buffer;
+			char* writeBufferEnd=write_buffer+IRC_WRITE_BUFFER_LEN;
+
+			writePtr+=snprintf(writePtr,writeBufferEnd-writePtr,"Current channels: ");
+
+			//For each channel the bot resides in
 			LinkedList_forEach(bot->channels,node){
-				irc_send_message(&bot->connection,target,Stringcp_from_string((String*)node->ptr));
+				//Copy filename to write buffer
+				writePtr+=snprintf(writePtr,writeBufferEnd-writePtr,"%.*s, ",(int)((String*)node->ptr)->length,((String*)node->ptr)->data);
 			}
+
+			irc_send_message(&bot->connection,target,STRINGCP(write_buffer,writePtr-write_buffer));
 			return true;
 		}),
 		COMMAND_PARAMETER_TYPE_NONE

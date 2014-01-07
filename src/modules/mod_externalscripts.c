@@ -10,12 +10,13 @@
 #include <lolie/Stringp.h>
 #include <ircbot/pipes.h>
 
-const char plugin_version[] ="1.1";
+const char plugin_version[] ="1.2";
 const char plugin_author[]  ="Lolirofle";
 
 #define BUFFER_LENGTH 512
 static char buffer[BUFFER_LENGTH];
-#define SCRIPT_PATH "external_commands/"
+#define SCRIPT_DIR "external_commands"
+#define SCRIPT_PATH SCRIPT_DIR "/"
 #define SCRIPT_PATH_LEN 18
 
 bool plugin_onCommand(struct IRCBot* bot,Stringcp target,Stringcp command,union CommandArgument* arg){
@@ -50,4 +51,49 @@ bool plugin_onCommand(struct IRCBot* bot,Stringcp target,Stringcp command,union 
 		return true;
 
 	return false;
+}
+
+static struct Command c;
+
+bool plugin_onLoad(struct IRCBot* bot){
+	c=(struct Command){
+		Stringcp_from_cstr("extcmds"),
+		Stringcp_from_cstr("Lists all external commands"),
+		function(bool,(struct IRCBot* bot,Stringcp target,union CommandArgument* arg){
+			DIR* directory;
+			struct dirent* dir;
+			char* writePtr=write_buffer;
+			char* writeBufferEnd=write_buffer+IRC_WRITE_BUFFER_LEN;
+
+			//Open directory and initialize `directory`. If specified path cannot be opened as a directory: return false
+			if(!(directory=opendir(SCRIPT_DIR)))
+				return false;
+
+			writePtr+=snprintf(writePtr,writeBufferEnd-writePtr,"External commands: ");
+
+			//For each file in the directory
+			while((dir=readdir(directory))){
+				//Skip hidden files
+				if(dir->d_name[0]=='.')
+					continue;
+
+				//Copy filename to write buffer
+				writePtr+=snprintf(writePtr,writeBufferEnd-writePtr,"%s, ",dir->d_name);
+			}
+
+			//Free resources
+			closedir(directory);
+
+			irc_send_message(&bot->connection,target,STRINGCP(write_buffer,writePtr-write_buffer));
+			return true;
+		}),
+		COMMAND_PARAMETER_TYPE_NONE
+	};
+	return registerCommand(&bot->commands,&c);
+}
+
+bool plugin_onUnload(struct IRCBot* bot){
+	if(!unregisterCommandByName(&bot->commands,c.name))
+		fprintf(stderr,"Module: mod_externalscripts: Warning: Command couldn't be freed: %s\n",c.name.ptr);
+	return true;
 }
