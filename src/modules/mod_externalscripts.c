@@ -86,8 +86,7 @@ bool plugin_onLoad(struct IRCBot* bot){
 
 			IRCBot_sendMessage(bot,target,STRINGCP(write_buffer,writePtr-write_buffer));
 			return true;
-		}),
-		COMMAND_PARAMETER_TYPE_NONE
+		})
 	};
 	return registerCommand(&bot->commands,&c);
 }

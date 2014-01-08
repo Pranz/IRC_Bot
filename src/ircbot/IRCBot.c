@@ -4,8 +4,11 @@
 #include <string.h>
 #include "ircinterface/irc.h"
 #include "Commands.h"
+#include "Locale.h"
+#include "api/Command.h"
 #include <lolie/Stringp.h>
 #include <lolie/String.h>
+#include <lolie/ControlStructures.h>
 
 const Stringcp IRCBot_signature={IRCBOT_NAME " v" IRCBOT_VERSION,sizeof(IRCBOT_NAME " v" IRCBOT_VERSION)-1};
 
@@ -292,4 +295,60 @@ void IRCBot_sendMessage(struct IRCBot* bot,Stringcp target,Stringcp message){
 
 void IRCBot_sendRaw(struct IRCBot* bot,Stringcp str){
 	irc_send_raw(bot->connection,str.ptr,str.length);
+}
+
+void IRCBot_performCommand(struct IRCBot* bot,Stringcp target,const char* command_begin,const char* command_end){
+	//Initialize command name
+	Stringcp commandName = STRINGCP(command_begin,0);
+
+	//Initialize argument list pointers
+	const char* arg_begin;
+
+	//Parse the command name ending point
+	loop{
+		//If there's no arguments
+		if(command_begin>=command_end){
+			arg_begin=command_end;
+			commandName.length=command_begin-commandName.ptr;
+			break;
+		}
+
+		//If the command separator is found
+		if(*command_begin==' '){
+			commandName.length=command_begin-commandName.ptr;
+
+			//Increment read pointer (command_begin) and check if there's actually any arguments at all
+			if(++command_begin==command_end)
+				arg_begin=command_end;
+			else
+				arg_begin=command_begin;
+			break;
+		}
+		++command_begin;
+	}
+
+	//Initialize command and argument structures
+	//(Because it's time to search for the command and verify the arguments to the command parameters)
+	const struct Command* currentCommand;
+	union CommandArgument arg;
+	arg.free.begin = arg_begin;
+	arg.free.end   = command_end;
+
+	//Check with plugin hooks if command is allowed to continue parsing
+	LinkedList_forEach(bot->pluginHooks.onCommand,node){
+		if(!(((typeof(((struct Plugin*)0)->functions.onCommand))(node->ptr))(bot,target,commandName,&arg)))
+			return;
+	}
+
+	if((currentCommand=getCommand(&bot->commands,commandName)) && currentCommand->func(bot,target,&arg))
+		return;
+	else{
+		int len = Stringp_vcopy(STRINGP(write_buffer,IRC_WRITE_BUFFER_LEN),4,
+			locale[language].unknown_command,
+			STRINGCP(": \"",3),
+			commandName,
+			STRINGCP("\"",1)
+		);
+		irc_send_message(bot->connection,target,STRINGCP(write_buffer,len));
+	}
 }

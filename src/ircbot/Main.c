@@ -9,9 +9,7 @@
 
 #include <ircinterface/irc.h>
 #include <ircinterface/irc_messagenumbers.h>
-#include "Locale.h"
 #include "Commands.h"
-#include "api/Command.h"
 #include "IRCBot.h"
 #include "api/Plugin.h"
 
@@ -20,8 +18,6 @@
 //TODO: Command aliases
 
 struct IRCBot bot;
-
-char command_separator = ' ';
 
 Stringp string_splitted(Stringp str,size_t(*delimiterFunc)(Stringp str),bool(*onSplitFunc)(const char* begin,const char* end)){
 	const char* arg_begin=str.ptr;
@@ -59,31 +55,6 @@ Stringp string_splitted_delim(Stringp str,Stringp delimiter,bool(*onSplitFunc)(c
 }
 
 Stringp Stringp_find_substr(Stringp str,bool(*findFunc)(Stringp str));
-
-void onCommand(struct IRCBot* bot,Stringcp command,Stringcp target,const char* arg_begin,const char* arg_end,const irc_message* message){
-	const struct Command* currentCommand;
-	union CommandArgument arg;
-	arg.free.begin=arg_begin;
-	arg.free.end=arg_end;
-
-	//Check with plugin hooks
-	LinkedList_forEach(bot->pluginHooks.onCommand,node){
-		if(!(((typeof(((struct Plugin*)0)->functions.onCommand))(node->ptr))(bot,target,command,&arg)))
-			return;
-	}
-
-	if((currentCommand=getCommand(&bot->commands,command)) && currentCommand->func(bot,target,&arg))
-		return;
-	else{
-		int len = Stringp_vcopy(STRINGP(write_buffer,IRC_WRITE_BUFFER_LEN),4,
-			locale[language].unknown_command,
-			STRINGP(": \"",3),
-			command,
-			STRINGP("\"",1)
-		);
-		irc_send_message(bot->connection,target,STRINGCP(write_buffer,len));
-	}
-}
 
 void onMessageFunc(const irc_connection* connection,const irc_message* message){
 	//Check with plugin hooks
@@ -126,33 +97,33 @@ void onMessageFunc(const irc_connection* connection,const irc_message* message){
 			}
 
 			break;
-		case IRC_MESSAGE_COMMAND_PRIVMSG:{
-			void onCommandRaw(Stringcp target,char* read_ptr_begin,char* read_ptr_end){
-				//Initialize read pointers
-				char* read_ptr = read_ptr_begin;
-
-				//Initialize command Stringp
-				while(read_ptr<read_ptr_end && *read_ptr!=command_separator)
-					++read_ptr;
-				Stringcp command = STRINGCP(read_ptr_begin,read_ptr-read_ptr_begin);
-				read_ptr_begin=++read_ptr;
-
-				//Commands
-				onCommand(&bot,command,target,MIN(read_ptr_begin,read_ptr_end),read_ptr_end,message);
-			}
-
-			//If private message command
-			if(message->command.privmsg.target.length == bot.nickname.length && Memory_equals(message->command.privmsg.target.ptr,bot.nickname.ptr,bot.nickname.length))
-				onCommandRaw(STRINGP_CONST(message->prefix.user.nickname),message->command.privmsg.text.ptr,message->command.privmsg.text.ptr+message->command.privmsg.text.length);
-
+		case IRC_MESSAGE_COMMAND_PRIVMSG:
 			//If on a channel with a '#' prefix and the private message has the correct prefix
-			else if(message->command.privmsg.target.ptr[0] == '#'){
-				if(message->command.privmsg.text.length<=bot.commandPrefix.length || !Memory_equals(message->command.privmsg.text.ptr,bot.commandPrefix.ptr,bot.commandPrefix.length))
-					break;
-
-				onCommandRaw(STRINGP_CONST(message->command.privmsg.target),message->command.privmsg.text.ptr+bot.commandPrefix.length,message->command.privmsg.text.ptr+message->command.privmsg.text.length);
+			if(message->command.privmsg.target.ptr[0] == '#'){
+				if(message->command.privmsg.text.length==bot.commandPrefix.length || memcmp(message->command.privmsg.text.ptr,bot.commandPrefix.ptr,bot.commandPrefix.length)==0)
+					IRCBot_performCommand(
+						&bot,
+						//Target is to the channel that the command was requested in
+						STRINGP_CONST(message->command.privmsg.target),
+						//Command begins after the command prefix
+						message->command.privmsg.text.ptr + bot.commandPrefix.length,
+						//Command ends at the same position (end of the message)
+						message->command.privmsg.text.ptr + message->command.privmsg.text.length
+					);
 			}
-		}	break;
+
+			//If private message
+			else if(message->command.privmsg.target.length == bot.nickname.length && memcmp(message->command.privmsg.target.ptr,bot.nickname.ptr,bot.nickname.length)==0)
+				IRCBot_performCommand(
+					&bot,
+					//Target is the nickname that sent the command
+					STRINGP_CONST(message->prefix.user.nickname),
+					//Command begins at the beginning of the message
+					message->command.privmsg.text.ptr,
+					//Command ends at the end of the message
+					message->command.privmsg.text.ptr + message->command.privmsg.text.length
+				);
+			break;
 	}
 }
 

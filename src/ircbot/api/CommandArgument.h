@@ -5,14 +5,15 @@
 
 union CommandArgument{
 	struct{
-		unsigned int argCount;
-		Stringp* args;
-	}value;
-
-	struct{
 		const char* begin;
 		const char* end;
 	}free;
+
+	long integer;
+	Stringcp string;
+	double floatingPoint;
+	char character;
+	void* custom;
 };
 
 #endif

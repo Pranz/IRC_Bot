@@ -31,8 +31,7 @@ bool plugin_onLoad(struct IRCBot* bot){
 			#define TEST_STRING "Test command has been executed"
 			IRCBot_sendMessage(bot,target,STRINGCP(TEST_STRING,sizeof(TEST_STRING)));
 			return true;
-		}),
-		COMMAND_PARAMETER_TYPE_NONE
+		})
 	};
 
 	c[1]=(struct Command){
@@ -41,8 +40,7 @@ bool plugin_onLoad(struct IRCBot* bot){
 		function(bool,(struct IRCBot* bot,Stringcp target,union CommandArgument* arg){
 			IRCBot_sendMessage(bot,target,locale[language].boolean[rand()%2]);
 			return true;
-		}),
-		COMMAND_PARAMETER_TYPE_NONE
+		})
 	};
 
 	c[2]=(struct Command){
@@ -52,8 +50,7 @@ bool plugin_onLoad(struct IRCBot* bot){
 			write_buffer[0]=rand()%6+'1';
 			IRCBot_sendMessage(bot,target,STRINGCP(write_buffer,1));
 			return true;
-		}),
-		COMMAND_PARAMETER_TYPE_NONE
+		})
 	};
 
 	c[3]=(struct Command){
@@ -66,8 +63,7 @@ bool plugin_onLoad(struct IRCBot* bot){
 			len+=url_encode(STRINGCP(arg->free.begin,arg->free.end-arg->free.begin),STRINGP(write_buffer+len,IRC_WRITE_BUFFER_LEN-len));
 			IRCBot_sendMessage(bot,target,STRINGCP(write_buffer,len));
 			return true;
-		}),
-		COMMAND_PARAMETER_TYPE_FREE
+		})
 	};
 
 	c[4]=(struct Command){
@@ -80,8 +76,7 @@ bool plugin_onLoad(struct IRCBot* bot){
 			len+=url_encode(STRINGCP(arg->free.begin,arg->free.end-arg->free.begin),STRINGP(write_buffer+len,IRC_WRITE_BUFFER_LEN-len));
 			IRCBot_sendMessage(bot,target,STRINGCP(write_buffer,len));
 			return true;
-		}),
-		COMMAND_PARAMETER_TYPE_FREE
+		})
 	};
 
 	c[5]=(struct Command){
@@ -94,8 +89,7 @@ bool plugin_onLoad(struct IRCBot* bot){
 			int len = strftime(write_buffer,IRC_WRITE_BUFFER_LEN,"%F %X %Z, %A v.%V, Day %j of the year",time_data);
 			IRCBot_sendMessage(bot,target,STRINGCP(write_buffer,len));
 			return true;
-		}),
-		COMMAND_PARAMETER_TYPE_NONE
+		})
 	};
 
 	//Upper
@@ -113,8 +107,7 @@ bool plugin_onLoad(struct IRCBot* bot){
 
 			IRCBot_sendMessage(bot,target,STRINGCP(write_buffer,argLen));
 			return true;
-		}),
-		COMMAND_PARAMETER_TYPE_FREE
+		})
 	};
 	//Lower
 	c[7]=(struct Command){
@@ -131,8 +124,7 @@ bool plugin_onLoad(struct IRCBot* bot){
 
 			IRCBot_sendMessage(bot,target,STRINGCP(write_buffer,argLen));
 			return true;
-		}),
-		COMMAND_PARAMETER_TYPE_FREE
+		})
 	};
 	//ROT13
 	c[8]=(struct Command){
@@ -156,8 +148,7 @@ bool plugin_onLoad(struct IRCBot* bot){
 
 			IRCBot_sendMessage(bot,target,STRINGCP(write_buffer,argLen));
 			return true;
-		}),
-		COMMAND_PARAMETER_TYPE_FREE
+		})
 	};
 	//ROT47
 	c[9]=(struct Command){
@@ -177,8 +168,7 @@ bool plugin_onLoad(struct IRCBot* bot){
 
 			IRCBot_sendMessage(bot,target,STRINGCP(write_buffer,argLen));
 			return true;
-		}),
-		COMMAND_PARAMETER_TYPE_FREE
+		})
 	};
 
 	//Random
@@ -218,8 +208,7 @@ bool plugin_onLoad(struct IRCBot* bot){
 			int len=snprintf(write_buffer,IRC_WRITE_BUFFER_LEN,"%u (%u to %u)",max>min?(value%(max-min+1))+min:value,min,max);
 			IRCBot_sendMessage(bot,target,STRINGCP(write_buffer,len));
 			return true;
-		}),
-		COMMAND_PARAMETER_TYPE_FREE
+		})
 	};
 	//Choose
 	c[11]=(struct Command){
@@ -265,8 +254,7 @@ bool plugin_onLoad(struct IRCBot* bot){
 			}));
 
 			return true;
-		}),
-		COMMAND_PARAMETER_TYPE_FREE
+		})
 	};
 	//Length
 	c[12]=(struct Command){
@@ -276,8 +264,7 @@ bool plugin_onLoad(struct IRCBot* bot){
 			int len=snprintf(write_buffer,IRC_WRITE_BUFFER_LEN,"%li",arg->free.end-arg->free.begin);
 			IRCBot_sendMessage(bot,target,STRINGCP(write_buffer,len));
 			return true;
-		}),
-		COMMAND_PARAMETER_TYPE_FREE
+		})
 	};
 	//Google
 	c[13]=(struct Command){
@@ -290,8 +277,7 @@ bool plugin_onLoad(struct IRCBot* bot){
 			len+=url_encode(STRINGCP(arg->free.begin,arg->free.end-arg->free.begin),STRINGP(write_buffer+len,IRC_WRITE_BUFFER_LEN-len));
 			IRCBot_sendMessage(bot,target,STRINGCP(write_buffer,len));
 			return true;
-		}),
-		COMMAND_PARAMETER_TYPE_FREE
+		})
 	};
 	//Prefix
 	c[14]=(struct Command){
@@ -321,8 +307,7 @@ bool plugin_onLoad(struct IRCBot* bot){
 			}
 			IRCBot_sendMessage(bot,target,STRINGCP(write_buffer,write_len));
 			return true;
-		}),
-		COMMAND_PARAMETER_TYPE_FREE
+		})
 	};
 	//Reverse
 	c[15]=(struct Command){
@@ -336,8 +321,7 @@ bool plugin_onLoad(struct IRCBot* bot){
 				*write_ptr++=*--read_ptr;
 			IRCBot_sendMessage(bot,target,STRINGCP(write_buffer,arg->free.end-arg->free.begin));
 			return true;
-		}),
-		COMMAND_PARAMETER_TYPE_FREE
+		})
 	};
 	//Language
 	c[16]=(struct Command){
@@ -352,8 +336,7 @@ bool plugin_onLoad(struct IRCBot* bot){
 				}
 			IRCBot_sendMessage(bot,target,locale[language].language.unknown);
 			return false;
-		}),
-		COMMAND_PARAMETER_TYPE_FREE
+		})
 	};
 	//Word count
 	c[17]=(struct Command){
@@ -372,8 +355,7 @@ bool plugin_onLoad(struct IRCBot* bot){
 			int len=snprintf(write_buffer,IRC_WRITE_BUFFER_LEN,"%u words",count);
 			IRCBot_sendMessage(bot,target,STRINGCP(write_buffer,len));
 			return true;
-		}),
-		COMMAND_PARAMETER_TYPE_FREE
+		})
 	};
 	//URL encode
 	c[18]=(struct Command){
@@ -382,8 +364,7 @@ bool plugin_onLoad(struct IRCBot* bot){
 		function(bool,(struct IRCBot* bot,Stringcp target,union CommandArgument* arg){
 			IRCBot_sendMessage(bot,target,STRINGCP(write_buffer,url_encode(STRINGCP(arg->free.begin,arg->free.end-arg->free.begin),STRINGP(write_buffer,IRC_WRITE_BUFFER_LEN))));
 			return true;
-		}),
-		COMMAND_PARAMETER_TYPE_FREE
+		})
 	};
 	//Magic 8-ball
 	c[19]=(struct Command){//TODO: magic8ball isn't in the help listing
@@ -422,8 +403,7 @@ bool plugin_onLoad(struct IRCBot* bot){
 			}
 			IRCBot_sendMessage(bot,target,STRINGCP(write_buffer,len));
 			return true;
-		}),
-		COMMAND_PARAMETER_TYPE_FREE
+		})
 	};
 	/*
 	c[]=(struct Command){
@@ -431,8 +411,7 @@ bool plugin_onLoad(struct IRCBot* bot){
 		Stringcp_from_cstr(""),
 		function(bool,(struct IRCBot* bot,Stringcp target,union CommandArgument* arg){
 			return true;
-		}),
-		COMMAND_PARAMETER_TYPE_NONE
+		})
 	};
 	*/
 

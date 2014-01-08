@@ -53,9 +53,33 @@ struct IRCBot{
 	}exit;
 };
 
+/**
+ * Returns whether the bot is connected
+ *
+ * @param  <struct IRCBot*> bot The bot to perform the action on
+ * @return <bool>               True if connected
+ */
 #define IRCBot_isConnected(bot) ((bot)->connected)
+
+ /**
+ * Shutdown the bot
+ *
+ * @param <struct IRCBot*> bot The bot to perform the action on
+ */
 #define IRCBot_shutdown(bot) ((bot)->exit=IRCBOT_EXIT_SHUTDOWN)
+
+ /**
+ * Restart the bot
+ *
+ * @param <struct IRCBot*> bot The bot to perform the action on
+ */
 #define IRCBot_restart(bot) ((bot)->exit=IRCBOT_EXIT_RESTART)
+
+ /**
+ * Reload the plugins on the bot
+ *
+ * @param <struct IRCBot*> bot The bot to perform the action on
+ */
 #define IRCBot_reloadPlugins(bot) ((bot)->exit=IRCBOT_EXIT_RELOADPLUGINS)
 
 //IRCBot must be connected for these functions
@@ -71,5 +95,16 @@ void IRCBot_partChannel(struct IRCBot* bot,Stringcp channel);
 
 void IRCBot_sendMessage(struct IRCBot* bot,Stringcp target,Stringcp message);
 void IRCBot_sendRaw(struct IRCBot* bot,Stringcp str);
+
+ /**
+ * Performs a registered command on the bot
+ * (The command string should include the command and the arguments if any)
+ *
+ * @param bot           The bot to perform the action on
+ * @param target        The target for sending messages to
+ * @param command_begin Pointer to the beginning of the command string
+ * @param command_end   Pointer to the end of the command string
+ */
+void IRCBot_performCommand(struct IRCBot* bot,Stringcp target,const char* command_begin,const char* command_end);
 
 #endif

@@ -11,7 +11,6 @@ struct Command{
 	Stringcp name;
 	Stringcp help;
 	bool(*func)(struct IRCBot* bot,Stringcp target,union CommandArgument* arg);
-	enum CommandParameterType argType;
 	union{
 		struct{
 			unsigned int argCount;
