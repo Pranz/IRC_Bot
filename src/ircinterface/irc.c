@@ -116,7 +116,7 @@ void irc_parse_message(const irc_connection* connection,Stringcp raw_message,voi
 		}
 
 		//Command
-		message.command_type = IRC_MESSAGE_COMMAND_UNKNOWN;
+		message.command_type = IRC_MESSAGE_TYPE_UNKNOWN;
 		while(true){
 			if(read_ptr>=read_ptr_end)
 				return;
@@ -129,33 +129,33 @@ void irc_parse_message(const irc_connection* connection,Stringcp raw_message,voi
 						if(read_ptr_begin[0]>='0' && read_ptr_begin[0]<='9' &&
 						   read_ptr_begin[1]>='0' && read_ptr_begin[1]<='9' &&
 						   read_ptr_begin[2]>='0' && read_ptr_begin[2]<='9'){
-							message.command_type = IRC_MESSAGE_COMMAND_NUMBER;
+							message.command_type = IRC_MESSAGE_TYPE_NUMBER;
 							message.command_type_number = atoi((char[4]){read_ptr_begin[0],read_ptr_begin[1],read_ptr_begin[2],'\0'});
 						}
 						break;
 					case 4:
 						if(Memory_equals(read_ptr_begin,"JOIN",4)){
-							message.command_type = IRC_MESSAGE_COMMAND_JOIN;
+							message.command_type = IRC_MESSAGE_TYPE_JOIN;
 							message.command.channels=NULL;
 						}else if(Memory_equals(read_ptr_begin,"PART",4)){
-							message.command_type = IRC_MESSAGE_COMMAND_PART;
+							message.command_type = IRC_MESSAGE_TYPE_PART;
 							message.command.channels=NULL;
 						}else if(Memory_equals(read_ptr_begin,"NICK",4))
-							message.command_type = IRC_MESSAGE_COMMAND_NICK;
+							message.command_type = IRC_MESSAGE_TYPE_NICK;
 						else if(Memory_equals(read_ptr_begin,"KICK",4))
-							message.command_type = IRC_MESSAGE_COMMAND_KICK;
+							message.command_type = IRC_MESSAGE_TYPE_KICK;
 						break;
 					case 5:
 						if(Memory_equals(read_ptr_begin,"TOPIC",5))
-							message.command_type = IRC_MESSAGE_COMMAND_TOPIC;
+							message.command_type = IRC_MESSAGE_TYPE_TOPIC;
 						break;
 					case 6:
 						if(Memory_equals(read_ptr_begin,"NOTICE",6))
-							message.command_type = IRC_MESSAGE_COMMAND_NOTICE;
+							message.command_type = IRC_MESSAGE_TYPE_NOTICE;
 						break;
 					case 7:
 						if(Memory_equals(read_ptr_begin,"PRIVMSG",7))
-							message.command_type = IRC_MESSAGE_COMMAND_PRIVMSG;
+							message.command_type = IRC_MESSAGE_TYPE_PRIVMSG;
 						break;
 				}
 				read_ptr_begin = ++read_ptr;
@@ -172,7 +172,7 @@ void irc_parse_message(const irc_connection* connection,Stringcp raw_message,voi
 			if((repeat=(read_ptr[0] == '\r' && read_ptr[1] == '\n')) || read_ptr>=read_ptr_end){
 				if(paramCount==1){
 					switch(message.command_type){
-						case IRC_MESSAGE_COMMAND_PRIVMSG:
+						case IRC_MESSAGE_TYPE_PRIVMSG:
 							message.command.privmsg.text = STRINGP(read_ptr_begin,read_ptr-read_ptr_begin);
 							break;
 					}
@@ -183,10 +183,10 @@ void irc_parse_message(const irc_connection* connection,Stringcp raw_message,voi
 			if(paramCount==0){
 				if(read_ptr[0] == ' '){
 					switch(message.command_type){
-						case IRC_MESSAGE_COMMAND_PRIVMSG:
+						case IRC_MESSAGE_TYPE_PRIVMSG:
 							message.command.privmsg.target = STRINGP(read_ptr_begin,read_ptr-read_ptr_begin);
 							break;
-						case IRC_MESSAGE_COMMAND_JOIN:{
+						case IRC_MESSAGE_TYPE_JOIN:{
 							Stringp* tmp = smalloc(sizeof(Stringp*));
 							*tmp = STRINGP(read_ptr_begin,read_ptr-read_ptr_begin);
 							LinkedList_push(&message.command.channels,tmp);

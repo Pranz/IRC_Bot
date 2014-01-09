@@ -64,16 +64,16 @@ void onMessageFunc(const irc_connection* connection,const irc_message* message){
 	}
 
 	switch(message->command_type){
-		case IRC_MESSAGE_COMMAND_NUMBER:
+		case IRC_MESSAGE_TYPE_NUMBER:
 			switch(message->command_type_number){
 				case 1:
 					IRCBot_joinChannel(&bot,STRINGCP("#bot",4));
 					//IRCBot_joinChannel(&bot,STRINGCP("#toa",4));
 					break;
-				case IRC_MESSAGENO_ERR_NONICKNAMEGIVEN:
-				case IRC_MESSAGENO_ERR_ERRONEUSNICKNAME:
-				case IRC_MESSAGENO_ERR_NICKNAMEINUSE:
-				case IRC_MESSAGENO_ERR_NICKCOLLISION:
+				case IRC_MESSAGE_TYPENO_ERR_NONICKNAMEGIVEN:
+				case IRC_MESSAGE_TYPENO_ERR_ERRONEUSNICKNAME:
+				case IRC_MESSAGE_TYPENO_ERR_NICKNAMEINUSE:
+				case IRC_MESSAGE_TYPENO_ERR_NICKCOLLISION:
 					//In case of infinite loop
 					if(bot.nickname.length>32)
 						break;
@@ -97,7 +97,7 @@ void onMessageFunc(const irc_connection* connection,const irc_message* message){
 			}
 
 			break;
-		case IRC_MESSAGE_COMMAND_PRIVMSG:
+		case IRC_MESSAGE_TYPE_PRIVMSG:
 			//If on a channel with a '#' prefix and the private message has the correct prefix
 			if(message->command.privmsg.target.ptr[0] == '#'){
 				if(message->command.privmsg.text.length==bot.commandPrefix.length || memcmp(message->command.privmsg.text.ptr,bot.commandPrefix.ptr,bot.commandPrefix.length)==0)

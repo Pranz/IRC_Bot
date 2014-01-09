@@ -15,17 +15,17 @@ typedef enum irc_message_prefix_type{
 	IRC_MESSAGE_PREFIX_SERVER
 }irc_message_prefix_type;
 
-typedef enum irc_message_command_type{
-	IRC_MESSAGE_COMMAND_UNKNOWN,
-	IRC_MESSAGE_COMMAND_NUMBER,
-	IRC_MESSAGE_COMMAND_JOIN,
-	IRC_MESSAGE_COMMAND_PART,
-	IRC_MESSAGE_COMMAND_NICK,
-	IRC_MESSAGE_COMMAND_TOPIC,
-	IRC_MESSAGE_COMMAND_KICK,
-	IRC_MESSAGE_COMMAND_PRIVMSG,
-	IRC_MESSAGE_COMMAND_NOTICE
-}irc_message_command_type;
+typedef enum irc_message_type{
+	IRC_MESSAGE_TYPE_UNKNOWN,
+	IRC_MESSAGE_TYPE_NUMBER,
+	IRC_MESSAGE_TYPE_JOIN,
+	IRC_MESSAGE_TYPE_PART,
+	IRC_MESSAGE_TYPE_NICK,
+	IRC_MESSAGE_TYPE_TOPIC,
+	IRC_MESSAGE_TYPE_KICK,
+	IRC_MESSAGE_TYPE_PRIVMSG,
+	IRC_MESSAGE_TYPE_NOTICE
+}irc_message_type;
 
 typedef struct irc_message{
 	Stringcp raw_message;
@@ -44,8 +44,8 @@ typedef struct irc_message{
 	}prefix;
 
 	struct{
-		unsigned int /*irc_message_command_type*/ command_type        :6; //Value limit: 0 to 64
-		unsigned int /*unsigned int*/             command_type_number :10;//Value limit: 0 to 1024
+		unsigned int /*irc_message_type*/ command_type        :6; //Value limit: 0 to 64
+		unsigned int /*unsigned int*/     command_type_number :10;//Value limit: 0 to 1024
 	};
 	union{
 		LinkedList/*<Stringp>*/* channels;
