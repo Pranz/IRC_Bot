@@ -4,19 +4,26 @@
 #include <lolie/Stringp.h>
 #include "CommandArgument.h"
 #include "CommandParameter.h"
-
 struct IRCBot;
 
+/**
+ * Structure representing a command
+ */
 struct Command{
+	//Name of the command (Call name)
 	Stringcp name;
+
+	//Help string
 	Stringcp help;
+
+	//Function that the command executes
 	bool(*func)(struct IRCBot* bot,Stringcp target,union CommandArgument* arg);
-	union{
-		struct{
-			unsigned int argCount;
-			struct CommandParameter* args;
-		}value;
-	}args;
+
+	//Parameter data
+	struct{
+		unsigned int count;
+		struct CommandParameter* data;
+	}parameters;
 };
 
 #endif
